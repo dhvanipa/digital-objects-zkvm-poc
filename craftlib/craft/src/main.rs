@@ -5,11 +5,11 @@ use sp1_sdk::{
     SP1Stdin,
 };
 
-use axe_program::constants::AXE_MINING_MAX;
+use axe_program::constants::{AXE_BLUEPRINT, AXE_MINING_MAX};
 use common::{object_hash_excluding_work, top_u64_be, Object, ObjectInput, ObjectOutput};
 use pow_program::{PowIn, PowOut};
-use stone_program::constants::STONE_MINING_MAX;
-use wood_program::constants::WOOD_MINING_MAX;
+use stone_program::constants::{STONE_BLUEPRINT, STONE_MINING_MAX};
+use wood_program::constants::{WOOD_BLUEPRINT, WOOD_MINING_MAX};
 
 mod save;
 
@@ -78,7 +78,7 @@ fn create_stone_object(
     stone_pk: &sp1_sdk::SP1ProvingKey,
     stone_vk: &sp1_sdk::SP1VerifyingKey,
 ) -> (Object, SP1ProofWithPublicValues) {
-    let (mut obj, obj_hash) = mine_object("stone", STONE_MINING_MAX, vec![]);
+    let (mut obj, obj_hash) = mine_object(STONE_BLUEPRINT, STONE_MINING_MAX, vec![]);
     println!("Mined stone: seed={}, hash={:x?}", obj.seed, obj_hash);
 
     let (pow_out, pow_proof) = create_pow_proof(client, pow_pk, pow_vk, 3, obj_hash);
@@ -117,7 +117,7 @@ fn create_wood_object(
     wood_pk: &sp1_sdk::SP1ProvingKey,
     wood_vk: &sp1_sdk::SP1VerifyingKey,
 ) -> (Object, SP1ProofWithPublicValues) {
-    let (obj, obj_hash) = mine_object("wood", WOOD_MINING_MAX, vec![]);
+    let (obj, obj_hash) = mine_object(WOOD_BLUEPRINT, WOOD_MINING_MAX, vec![]);
     println!("Mined wood: seed={}, hash={:x?}", obj.seed, obj_hash);
 
     let mut wood_stdin = SP1Stdin::new();
@@ -153,7 +153,7 @@ fn create_axe_object(
     stone_hash: [u8; 32],
     stone_proof: SP1ProofWithPublicValues,
 ) -> (Object, SP1ProofWithPublicValues) {
-    let (obj, obj_hash) = mine_object("axe", AXE_MINING_MAX, vec![wood_hash, stone_hash]);
+    let (obj, obj_hash) = mine_object(AXE_BLUEPRINT, AXE_MINING_MAX, vec![wood_hash, stone_hash]);
     println!("Created axe: seed={}, hash={:x?}", obj.seed, obj_hash);
 
     let mut axe_stdin = SP1Stdin::new();

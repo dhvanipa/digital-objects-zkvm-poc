@@ -28,7 +28,7 @@ pub fn main() {
 
     assert!(object_inp.object.inputs.len() == 2, "Must have 2 inputs");
     assert!(
-        object_inp.object.blueprint == "axe",
+        object_inp.object.blueprint == constants::AXE_BLUEPRINT,
         "Blueprint must be axe"
     );
 

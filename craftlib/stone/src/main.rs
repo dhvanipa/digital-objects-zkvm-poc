@@ -26,7 +26,7 @@ pub fn main() {
 
     assert!(object_inp.object.inputs.len() == 0, "Must have no inputs");
     assert!(
-        object_inp.object.blueprint == "stone",
+        object_inp.object.blueprint == constants::STONE_BLUEPRINT,
         "Blueprint must be stone"
     );
 

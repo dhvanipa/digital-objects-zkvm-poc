@@ -1,1 +1,2 @@
+pub const WOOD_BLUEPRINT: &str = "wood";
 pub const WOOD_MINING_MAX: u64 = 0x0020_0000_0000_0000;
