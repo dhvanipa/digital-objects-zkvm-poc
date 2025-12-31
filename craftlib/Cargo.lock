@@ -1198,13 +1198,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fibonacci-program"
-version = "1.1.0"
-dependencies = [
- "sp1-zkvm",
-]
-
-[[package]]
 name = "fibonacci-script"
 version = "0.1.0"
 dependencies = [
@@ -2768,7 +2761,6 @@ checksum = "350e9b48cbc6b0e028b0473b114454c6316e57336ee184ceab6e53f72c178b3e"
 name = "pow-program"
 version = "1.1.0"
 dependencies = [
- "bincode",
  "serde",
  "sha2",
  "sp1-zkvm",
@@ -4140,6 +4132,17 @@ name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
+
+[[package]]
+name = "stone-program"
+version = "1.1.0"
+dependencies = [
+ "bincode",
+ "pow-program",
+ "serde",
+ "sha2",
+ "sp1-zkvm",
+]
 
 [[package]]
 name = "strsim"

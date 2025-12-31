@@ -1,3 +1,5 @@
+use core::num;
+use pow_program::PowIn;
 use sha2::{Digest, Sha256};
 use sp1_sdk::{
     include_elf, utils, HashableKey, ProverClient, SP1Proof, SP1ProofWithPublicValues, SP1Stdin,
@@ -7,26 +9,8 @@ use std::io::Write;
 use std::path::Path;
 
 /// The ELF we want to execute inside the zkVM.
-const ELF: &[u8] = include_elf!("fibonacci-program");
 const POW_ELF: &[u8] = include_elf!("pow-program");
-
-fn save_proof_as_json(
-    proof: &SP1ProofWithPublicValues,
-    path: impl AsRef<Path>,
-) -> Result<(), Box<dyn std::error::Error>> {
-    let json = serde_json::to_string_pretty(proof)?;
-    let mut file = File::create(path.as_ref())?;
-    file.write_all(json.as_bytes())?;
-    Ok(())
-}
-
-fn load_proof_from_json(
-    path: impl AsRef<Path>,
-) -> Result<SP1ProofWithPublicValues, Box<dyn std::error::Error>> {
-    let file = File::open(path.as_ref())?;
-    let proof = serde_json::from_reader(file)?;
-    Ok(proof)
-}
+const STONE_ELF: &[u8] = include_elf!("stone-program");
 
 fn main() {
     // Setup logging.
@@ -44,56 +28,27 @@ fn main() {
     println!("Proving key hash (step): {:?}", vk_step.hash_u32());
 
     // Choose starting input
-    let base_input: [u8; 32] = Sha256::digest(b"starting input").into();
+    let input: [u8; 32] = Sha256::digest(b"starting input").into();
+    let num_work = 300u32;
 
     // --- Step 1 (base) ---
-    stdin.write(&false); // has_prev = false
-    stdin.write(&base_input); // base_input
+    stdin.write(&PowIn {
+        n_iters: num_work,
+        input,
+    });
 
     let mut proof: SP1ProofWithPublicValues = client
         .prove(&pk_step, &stdin)
         .compressed()
         .run()
         .expect("proving failed");
-    let pv = proof.public_values.read::<pow_program::PV>();
+    let pv = proof.public_values.read::<pow_program::PowOut>();
 
     client
         .verify(&proof, &vk_step)
         .expect("verification failed");
 
-    // --- Steps 2..N ---
-    let n_steps = 10u32;
-    let mut prev_proof = proof;
-    let mut prev_pv = pv;
-
-    for _ in 2..=n_steps {
-        println!("Performing step {}", prev_pv.count + 1);
-        let mut stdin = SP1Stdin::new();
-        stdin.write(&true); // has_prev = true
-        stdin.write(&prev_pv);
-        let SP1Proof::Compressed(proof) = prev_proof.proof else {
-            panic!()
-        };
-        stdin.write_proof(*proof, vk_step.clone().vk);
-
-        println!("Proving step {}", prev_pv.count + 1);
-        let mut next_proof = client
-            .prove(&pk_step, &stdin)
-            .compressed()
-            .run()
-            .expect("proving failed");
-        let next_pv = next_proof.public_values.read::<pow_program::PV>();
-
-        println!("Verifying step {}", prev_pv.count + 1);
-        client
-            .verify(&next_proof, &vk_step)
-            .expect("verification failed");
-
-        prev_proof = next_proof;
-        prev_pv = next_pv;
-    }
-
-    println!("final pv = {:?}", prev_pv);
+    println!("final pv = {:?}", pv);
 
     // // // Test a round trip of proof serialization and deserialization.
     // proof
