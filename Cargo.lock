@@ -770,7 +770,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "craft"
+name = "craftlib"
 version = "0.1.0"
 dependencies = [
  "axe-program",

@@ -1,11 +1,11 @@
 [workspace]
 members = [
     "common",
-    "craft",
-    "pow",
-    "stone",
-    "wood",
-    "axe",
+    "craftlib",
+    "programs/pow",
+    "programs/wood",
+    "programs/stone",
+    "programs/axe",
 ]
 resolver = "2"
 

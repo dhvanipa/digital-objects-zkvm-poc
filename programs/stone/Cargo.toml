@@ -1,5 +1,5 @@
 [package]
-name = "wood-program"
+name = "stone-program"
 version = "1.1.0"
 edition = "2021"
 
@@ -8,5 +8,5 @@ sp1-zkvm = { version = "5.0.8", features = ["verify"] }
 sha2 = { workspace = true }
 serde = { workspace = true }
 bincode = { workspace = true }
-common = { path = "../common" }
+common = { path = "../../common" }
 pow-program = { path = "../pow" }

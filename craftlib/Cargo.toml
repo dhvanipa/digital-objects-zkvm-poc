@@ -1,5 +1,5 @@
 [package]
-name = "craft"
+name = "craftlib"
 version = "0.1.0"
 edition = "2021"
 
@@ -15,10 +15,10 @@ sha2 = "0.10.8"
 rand = "0.8"
 bincode = { workspace = true }
 common = { path = "../common" }
-pow-program = { path = "../pow" }
-stone-program = { path = "../stone" }
-wood-program = { path = "../wood" }
-axe-program = { path = "../axe" }
+pow-program = { path = "../programs/pow" }
+wood-program = { path = "../programs/wood" }
+stone-program = { path = "../programs/stone" }
+axe-program = { path = "../programs/axe" }
 
 [build-dependencies]
 sp1-build = "5.0.8"

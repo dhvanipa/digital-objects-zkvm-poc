@@ -15,7 +15,7 @@ sp1_zkvm::entrypoint!(main);
 
 // TODO: find a way to auto-generate and share these constants
 const POW_VKEY_HASH: [u32; 8] = [
-    400740169, 1082219568, 1402990414, 603044658, 1254365470, 1793183360, 321136646, 830585851,
+    1984960963, 633242056, 1991409535, 2009474444, 43407353, 1711027148, 1412304692, 1001710625,
 ];
 
 pub fn main() {
