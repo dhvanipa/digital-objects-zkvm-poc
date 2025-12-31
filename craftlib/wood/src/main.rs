@@ -10,7 +10,7 @@ use common::{top_u64_be, ObjectInput};
 use sha2::{Digest, Sha256};
 sp1_zkvm::entrypoint!(main);
 
-const WOOD_MINING_MAX: u64 = 0x0020_0000_0000_0000;
+mod constants;
 
 pub fn main() {
     // Read an input to the program.
@@ -36,7 +36,7 @@ pub fn main() {
         "Object hash does not match expected hash"
     );
     assert!(
-        top_u64_be(object_hash) <= WOOD_MINING_MAX,
+        top_u64_be(object_hash) <= constants::WOOD_MINING_MAX,
         "Object hash does not meet mining difficulty"
     );
     let empty_work: [u8; 32] = [0u8; 32];

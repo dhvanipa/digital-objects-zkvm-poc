@@ -1,17 +1,19 @@
 use sp1_sdk::{
-    include_elf, utils, HashableKey, ProverClient, SP1Proof, SP1ProofWithPublicValues, SP1Stdin,
+    include_elf, utils, EnvProver, ProverClient, SP1Proof, SP1ProofWithPublicValues, SP1Stdin,
 };
 
 use common::{object_hash_excluding_work, top_u64_be, Object, ObjectInput};
 use pow_program::{PowIn, PowOut};
 use stone_program::constants::STONE_MINING_MAX;
+use wood_program::constants::WOOD_MINING_MAX;
 
 mod save;
 
 const POW_ELF: &[u8] = include_elf!("pow-program");
 const STONE_ELF: &[u8] = include_elf!("stone-program");
+const WOOD_ELF: &[u8] = include_elf!("wood-program");
 
-fn mine_stone_object() -> (Object, [u8; 32]) {
+fn mine_object(blueprint: &str, max_difficulty: u64) -> (Object, [u8; 32]) {
     let key = {
         let bytes: [u8; 32] = rand::random();
         hex::encode(bytes)
@@ -22,86 +24,149 @@ fn mine_stone_object() -> (Object, [u8; 32]) {
             key: key.clone(),
             inputs: vec![],
             seed,
-            blueprint: "stone".to_string(),
-            work: [0u8; 32], // placeholder for now
+            blueprint: blueprint.to_string(),
+            work: [0u8; 32],
         };
 
         let h = object_hash_excluding_work(&obj);
-        if top_u64_be(h) <= STONE_MINING_MAX {
+        if top_u64_be(h) <= max_difficulty {
             return (obj, h);
         }
     }
 
-    panic!("failed to mine stone object");
+    panic!("failed to mine {} object", blueprint);
 }
 
-fn main() {
-    // Setup logging.
-    utils::setup_logger();
-
-    let client = ProverClient::from_env();
-
-    // Setup keys.
-    let (pow_pk, pow_vk) = client.setup(POW_ELF);
-    let (stone_pk, stone_vk) = client.setup(STONE_ELF);
-    println!("pow vk hash_u32 = {:?}", pow_vk.hash_u32());
-
-    // 1) Mine (key, seed) to satisfy difficulty.
-    let (mut obj, obj_hash) = mine_stone_object();
-    println!("mined stone: obj={:?}, obj_hash={:?}", obj, obj_hash);
-
-    // 2) Prove PoW with n_iters = 3, input = obj_hash
+fn create_pow_proof(
+    client: &EnvProver,
+    pow_pk: &sp1_sdk::SP1ProvingKey,
+    pow_vk: &sp1_sdk::SP1VerifyingKey,
+    n_iters: u32,
+    input: [u8; 32],
+) -> (PowOut, SP1Proof) {
     let mut pow_stdin = SP1Stdin::new();
-    pow_stdin.write(&PowIn {
-        n_iters: 3,
-        input: obj_hash,
-    });
+    pow_stdin.write(&PowIn { n_iters, input });
 
     let mut pow_proof: SP1ProofWithPublicValues = client
-        .prove(&pow_pk, &pow_stdin)
+        .prove(pow_pk, &pow_stdin)
         .compressed()
         .run()
         .expect("pow proving failed");
 
     client
-        .verify(&pow_proof, &pow_vk)
+        .verify(&pow_proof, pow_vk)
         .expect("pow verify failed");
 
-    // Read PowOut (this must match what your guest reads / bincode-digests).
     let pow_out: PowOut = pow_proof.public_values.read();
-    println!("pow_out = {:?}", pow_out);
 
-    // Set the object's work to the pow output.
+    let SP1Proof::Compressed(compressed_proof) = pow_proof.proof else {
+        panic!("expected compressed proof")
+    };
+
+    (pow_out, SP1Proof::Compressed(compressed_proof))
+}
+
+fn create_stone_object(
+    client: &EnvProver,
+    pow_pk: &sp1_sdk::SP1ProvingKey,
+    pow_vk: &sp1_sdk::SP1VerifyingKey,
+    stone_pk: &sp1_sdk::SP1ProvingKey,
+    stone_vk: &sp1_sdk::SP1VerifyingKey,
+) -> (Object, SP1ProofWithPublicValues) {
+    let (mut obj, obj_hash) = mine_object("stone", STONE_MINING_MAX);
+    println!("Mined stone: seed={}, hash={:x?}", obj.seed, obj_hash);
+
+    let (pow_out, pow_proof) = create_pow_proof(client, pow_pk, pow_vk, 3, obj_hash);
     obj.work = pow_out.output;
 
-    // 3) Prove stone program
-    // stone guest reads: ObjectInput, then PowOut, then calls verify_sp1_proof (reads proof from proof stream)
     let mut stone_stdin = SP1Stdin::new();
-
     stone_stdin.write(&ObjectInput {
         hash: obj_hash,
         object: obj.clone(),
     });
     stone_stdin.write(&pow_out);
 
-    let SP1Proof::Compressed(pow_proof) = pow_proof.proof else {
-        panic!()
+    let SP1Proof::Compressed(compressed_proof) = pow_proof else {
+        panic!("expected compressed proof")
     };
-    stone_stdin.write_proof(*pow_proof, pow_vk.clone().vk);
+    stone_stdin.write_proof(*compressed_proof, pow_vk.clone().vk);
 
     let mut stone_proof: SP1ProofWithPublicValues = client
-        .prove(&stone_pk, &stone_stdin)
+        .prove(stone_pk, &stone_stdin)
         .compressed()
         .run()
         .expect("stone proving failed");
 
     client
-        .verify(&stone_proof, &stone_vk)
+        .verify(&stone_proof, stone_vk)
         .expect("stone verify failed");
 
     let committed_hash: [u8; 32] = stone_proof.public_values.read();
-    println!("stone committed hash = {:?}", committed_hash);
+    println!("Stone committed hash: {:x?}", committed_hash);
 
-    save::save_object_as_json(&obj, &stone_proof, "stone.json").expect("failed to save stone");
-    println!("saved stone to stone.json");
+    (obj, stone_proof)
+}
+
+fn create_wood_object(
+    client: &EnvProver,
+    wood_pk: &sp1_sdk::SP1ProvingKey,
+    wood_vk: &sp1_sdk::SP1VerifyingKey,
+) -> (Object, SP1ProofWithPublicValues) {
+    let (obj, obj_hash) = mine_object("wood", WOOD_MINING_MAX);
+    println!("Mined wood: seed={}, hash={:x?}", obj.seed, obj_hash);
+
+    let mut wood_stdin = SP1Stdin::new();
+    wood_stdin.write(&ObjectInput {
+        hash: obj_hash,
+        object: obj.clone(),
+    });
+
+    let mut wood_proof: SP1ProofWithPublicValues = client
+        .prove(wood_pk, &wood_stdin)
+        .compressed()
+        .run()
+        .expect("wood proving failed");
+
+    client
+        .verify(&wood_proof, wood_vk)
+        .expect("wood verify failed");
+
+    let committed_hash: [u8; 32] = wood_proof.public_values.read();
+    println!("Wood committed hash: {:x?}", committed_hash);
+
+    (obj, wood_proof)
+}
+
+fn main() {
+    utils::setup_logger();
+
+    let client = ProverClient::from_env();
+
+    println!("Setting up proving/verifying keys...");
+    let (pow_pk, pow_vk) = client.setup(POW_ELF);
+    let (stone_pk, stone_vk) = client.setup(STONE_ELF);
+    let (wood_pk, wood_vk) = client.setup(WOOD_ELF);
+
+    std::fs::create_dir_all("objects").expect("failed to create objects directory");
+
+    let num_stones = 2;
+    let num_woods = 2;
+
+    for i in 1..=num_stones {
+        println!("\n=== Creating Stone {} ===", i);
+        let (obj, proof) = create_stone_object(&client, &pow_pk, &pow_vk, &stone_pk, &stone_vk);
+        let filename = format!("objects/stone_{}.json", i);
+        save::save_object_as_json(&obj, &proof, &filename).expect("failed to save stone");
+        println!("Saved to {}", filename);
+    }
+
+    for i in 1..=num_woods {
+        println!("\n=== Creating Wood {} ===", i);
+        let (obj, proof) = create_wood_object(&client, &wood_pk, &wood_vk);
+        let filename = format!("objects/wood_{}.json", i);
+        save::save_object_as_json(&obj, &proof, &filename).expect("failed to save wood");
+        println!("Saved to {}", filename);
+    }
+
+    println!("\n✓ All objects created successfully!");
 }
