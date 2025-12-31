@@ -6,13 +6,14 @@
 // inside the zkVM.
 #![no_main]
 
-use common::{object_hash_excluding_work, top_u64_be, ObjectInput, ObjectOutput};
+use common::{top_u64_be, ObjectInput, ObjectOutput};
 use sha2::{Digest, Sha256};
 
 mod constants;
 
 sp1_zkvm::entrypoint!(main);
 
+// TODO: find a way to auto-generate and share these constants
 const POW_VKEY_HASH: [u32; 8] = [
     400740169, 1082219568, 1402990414, 603044658, 1254365470, 1793183360, 321136646, 830585851,
 ];
@@ -30,11 +31,7 @@ pub fn main() {
         "Blueprint must be stone"
     );
 
-    let object_hash: [u8; 32] = object_hash_excluding_work(&object_inp.object);
-    assert!(
-        object_hash == object_inp.hash,
-        "Object hash does not match expected hash"
-    );
+    let object_hash: [u8; 32] = object_inp.object.hash();
     assert!(
         top_u64_be(object_hash) <= constants::STONE_MINING_MAX,
         "Object hash does not meet mining difficulty"
@@ -52,7 +49,7 @@ pub fn main() {
         "Proof of work input must match object hash"
     );
     assert!(
-        pow_public_values.output == object_inp.object.work,
+        pow_public_values.output == object_inp.work,
         "Proof of work output must match object work"
     );
 
@@ -61,7 +58,7 @@ pub fn main() {
     // Behind the scenes, this also compiles down to a system call which handles writing
     // outputs to the prover.
     sp1_zkvm::io::commit(&ObjectOutput {
-        hash: object_inp.hash,
+        hash: object_hash,
         consumed: vec![],
     });
 }

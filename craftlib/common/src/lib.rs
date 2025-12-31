@@ -9,13 +9,12 @@ pub struct Object {
     pub inputs: Vec<ObjectHash>,
     pub seed: u32,
     pub blueprint: String,
-    pub work: [u8; 32],
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct ObjectInput {
-    pub hash: ObjectHash,
     pub object: Object,
+    pub work: [u8; 32],
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
@@ -24,11 +23,11 @@ pub struct ObjectOutput {
     pub consumed: Vec<ObjectHash>,
 }
 
-pub fn object_hash_excluding_work(obj: &Object) -> [u8; 32] {
-    let mut o = obj.clone();
-    o.work = [0u8; 32];
-    let bytes = bincode::serialize(&o).expect("serialize Object");
-    Sha256::digest(&bytes).into()
+impl Object {
+    pub fn hash(&self) -> [u8; 32] {
+        let bytes = bincode::serialize(&self.clone()).expect("serialize Object");
+        Sha256::digest(&bytes).into()
+    }
 }
 
 pub fn top_u64_be(hash: [u8; 32]) -> u64 {

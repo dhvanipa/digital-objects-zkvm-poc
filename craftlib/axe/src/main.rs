@@ -7,16 +7,17 @@
 #![no_main]
 
 use axe_program::constants;
-use common::{object_hash_excluding_work, top_u64_be, ObjectInput, ObjectOutput};
+use common::{top_u64_be, ObjectInput, ObjectOutput};
 use sha2::{Digest, Sha256};
 
 sp1_zkvm::entrypoint!(main);
 
+// TODO: find a way to auto-generate and share these constants
 const WOOD_VKEY_HASH: [u32; 8] = [
-    967837498, 927415804, 215094840, 937742378, 334789233, 318139022, 1730081193, 260594501,
+    687550195, 1793166740, 338494431, 1946809861, 1472814873, 1435689528, 136791663, 372439300,
 ];
 const STONE_VKEY_HASH: [u32; 8] = [
-    904330211, 848037444, 1914903530, 1760434633, 822770919, 207072988, 1877340267, 293418241,
+    1314584196, 552375262, 1950159376, 341772153, 1762279404, 962183620, 1653152760, 758019006,
 ];
 
 pub fn main() {
@@ -32,18 +33,14 @@ pub fn main() {
         "Blueprint must be axe"
     );
 
-    let object_hash: [u8; 32] = object_hash_excluding_work(&object_inp.object);
-    assert!(
-        object_hash == object_inp.hash,
-        "Object hash does not match expected hash"
-    );
+    let object_hash: [u8; 32] = object_inp.object.hash();
     assert!(
         top_u64_be(object_hash) <= constants::AXE_MINING_MAX,
         "Object hash does not meet mining difficulty"
     );
     let empty_work: [u8; 32] = [0u8; 32];
     assert!(
-        object_inp.object.work == empty_work,
+        object_inp.work == empty_work,
         "Proof of work output must match object work"
     );
 
@@ -68,7 +65,7 @@ pub fn main() {
     // Behind the scenes, this also compiles down to a system call which handles writing
     // outputs to the prover.
     sp1_zkvm::io::commit(&ObjectOutput {
-        hash: object_inp.hash,
+        hash: object_hash,
         consumed: object_inp.object.inputs,
     });
 }

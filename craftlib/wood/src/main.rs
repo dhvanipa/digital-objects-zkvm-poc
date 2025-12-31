@@ -6,8 +6,7 @@
 // inside the zkVM.
 #![no_main]
 
-use common::{object_hash_excluding_work, top_u64_be, ObjectInput, ObjectOutput};
-use sha2::{Digest, Sha256};
+use common::{top_u64_be, ObjectInput, ObjectOutput};
 sp1_zkvm::entrypoint!(main);
 
 mod constants;
@@ -25,18 +24,14 @@ pub fn main() {
         "Blueprint must be wood"
     );
 
-    let object_hash: [u8; 32] = object_hash_excluding_work(&object_inp.object);
-    assert!(
-        object_hash == object_inp.hash,
-        "Object hash does not match expected hash"
-    );
+    let object_hash: [u8; 32] = object_inp.object.hash();
     assert!(
         top_u64_be(object_hash) <= constants::WOOD_MINING_MAX,
         "Object hash does not meet mining difficulty"
     );
     let empty_work: [u8; 32] = [0u8; 32];
     assert!(
-        object_inp.object.work == empty_work,
+        object_inp.work == empty_work,
         "Proof of work output must match object work"
     );
 
@@ -45,7 +40,7 @@ pub fn main() {
     // Behind the scenes, this also compiles down to a system call which handles writing
     // outputs to the prover.
     sp1_zkvm::io::commit(&ObjectOutput {
-        hash: object_inp.hash,
+        hash: object_hash,
         consumed: vec![],
     });
 }
