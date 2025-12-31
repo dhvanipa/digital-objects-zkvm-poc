@@ -8,23 +8,30 @@
 #![no_main]
 sp1_zkvm::entrypoint!(main);
 
-use alloy_sol_types::SolType;
-use fibonacci_lib::{fibonacci, PublicValuesStruct};
-
 pub fn main() {
     // Read an input to the program.
     //
-    // Behind the scenes, this compiles down to a custom system call which handles reading inputs
+    // Behind the scenes, this compiles down to a system call which handles reading inputs
     // from the prover.
     let n = sp1_zkvm::io::read::<u32>();
 
-    // Compute the n'th fibonacci number using a function from the workspace lib crate.
-    let (a, b) = fibonacci(n);
+    // Write n to public input
+    sp1_zkvm::io::commit(&n);
 
-    // Encode the public values of the program.
-    let bytes = PublicValuesStruct::abi_encode(&PublicValuesStruct { n, a, b });
+    // Compute the n'th fibonacci number, using normal Rust code.
+    let mut a = 0;
+    let mut b = 1;
+    for _ in 0..n {
+        let mut c = a + b;
+        c %= 7919; // Modulus to prevent overflow.
+        a = b;
+        b = c;
+    }
 
-    // Commit to the public values of the program. The final proof will have a commitment to all the
-    // bytes that were committed to.
-    sp1_zkvm::io::commit_slice(&bytes);
+    // Write the output of the program.
+    //
+    // Behind the scenes, this also compiles down to a system call which handles writing
+    // outputs to the prover.
+    sp1_zkvm::io::commit(&a);
+    sp1_zkvm::io::commit(&b);
 }
