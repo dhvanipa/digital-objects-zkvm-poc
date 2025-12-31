@@ -1,7 +1,28 @@
 use sp1_sdk::{include_elf, utils, HashableKey, ProverClient, SP1ProofWithPublicValues, SP1Stdin};
+use std::fs::File;
+use std::io::Write;
+use std::path::Path;
 
 /// The ELF we want to execute inside the zkVM.
 const ELF: &[u8] = include_elf!("fibonacci-program");
+
+fn save_proof_as_json(
+    proof: &SP1ProofWithPublicValues,
+    path: impl AsRef<Path>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let json = serde_json::to_string_pretty(proof)?;
+    let mut file = File::create(path.as_ref())?;
+    file.write_all(json.as_bytes())?;
+    Ok(())
+}
+
+fn load_proof_from_json(
+    path: impl AsRef<Path>,
+) -> Result<SP1ProofWithPublicValues, Box<dyn std::error::Error>> {
+    let file = File::open(path.as_ref())?;
+    let proof = serde_json::from_reader(file)?;
+    Ok(proof)
+}
 
 fn main() {
     // Setup logging.
@@ -48,13 +69,16 @@ fn main() {
     // Verify proof and public values
     client.verify(&proof, &vk).expect("verification failed");
 
-    // Test a round trip of proof serialization and deserialization.
+    // // Test a round trip of proof serialization and deserialization.
     proof
         .save("proof-with-pis.bin")
         .expect("saving proof failed");
+    save_proof_as_json(&proof, "proof-with-pis.json").expect("saving proof as json failed");
 
+    // let mut deserialized_proof =
+    //     SP1ProofWithPublicValues::load("proof-with-pis.bin").expect("loading proof failed");
     let mut deserialized_proof =
-        SP1ProofWithPublicValues::load("proof-with-pis.bin").expect("loading proof failed");
+        load_proof_from_json("proof-with-pis.json").expect("loading proof from json failed");
 
     let n = deserialized_proof.public_values.read::<u32>();
     let a = deserialized_proof.public_values.read::<u32>();
