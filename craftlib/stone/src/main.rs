@@ -1,4 +1,4 @@
-//! A simple program that crafts a stone
+//! A simple program that crafts an object
 
 // These two lines are necessary for the program to properly compile.
 //
@@ -6,19 +6,16 @@
 // inside the zkVM.
 #![no_main]
 
+use common::{top_u64_be, ObjectInput};
 use sha2::{Digest, Sha256};
-use stone_program::ObjectInput;
+
+mod constants;
+
 sp1_zkvm::entrypoint!(main);
 
 const POW_VKEY_HASH: [u32; 8] = [
     400740169, 1082219568, 1402990414, 603044658, 1254365470, 1793183360, 321136646, 830585851,
 ];
-
-const STONE_MINING_MAX: u64 = 0x0020_0000_0000_0000;
-
-fn top_u64_be(hash: [u8; 32]) -> u64 {
-    u64::from_be_bytes(hash[0..8].try_into().unwrap())
-}
 
 pub fn main() {
     // Read an input to the program.
@@ -44,7 +41,7 @@ pub fn main() {
         "Object hash does not match expected hash"
     );
     assert!(
-        top_u64_be(object_hash) <= STONE_MINING_MAX,
+        top_u64_be(object_hash) <= constants::STONE_MINING_MAX,
         "Object hash does not meet mining difficulty"
     );
 

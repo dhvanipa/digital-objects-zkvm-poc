@@ -1,8 +1,10 @@
 [workspace]
 members = [
-    "script",
+    "craft",
     "pow",
     "stone",
+    "common",
+    "wood",
 ]
 resolver = "2"
 

@@ -1,6 +1,0 @@
-use sp1_build::build_program_with_args;
-
-fn main() {
-    build_program_with_args("../pow", Default::default());
-    build_program_with_args("../stone", Default::default());
-}
