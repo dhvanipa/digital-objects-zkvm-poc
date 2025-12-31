@@ -41,6 +41,7 @@ fn main() {
 
     // Setup for the step program
     let (pk_step, vk_step) = client.setup(POW_ELF);
+    println!("Proving key hash (step): {:?}", vk_step.hash_u32());
 
     // Choose starting input
     let base_input: [u8; 32] = Sha256::digest(b"starting input").into();
@@ -55,7 +56,6 @@ fn main() {
         .run()
         .expect("proving failed");
     let pv = proof.public_values.read::<pow_program::PV>();
-    println!("Step 1 proof generated with count = {:?}", pv);
 
     client
         .verify(&proof, &vk_step)
@@ -67,6 +67,7 @@ fn main() {
     let mut prev_pv = pv;
 
     for _ in 2..=n_steps {
+        println!("Performing step {}", prev_pv.count + 1);
         let mut stdin = SP1Stdin::new();
         stdin.write(&true); // has_prev = true
         stdin.write(&prev_pv);
@@ -75,6 +76,7 @@ fn main() {
         };
         stdin.write_proof(*proof, vk_step.clone().vk);
 
+        println!("Proving step {}", prev_pv.count + 1);
         let mut next_proof = client
             .prove(&pk_step, &stdin)
             .compressed()
@@ -82,6 +84,7 @@ fn main() {
             .expect("proving failed");
         let next_pv = next_proof.public_values.read::<pow_program::PV>();
 
+        println!("Verifying step {}", prev_pv.count + 1);
         client
             .verify(&next_proof, &vk_step)
             .expect("verification failed");
