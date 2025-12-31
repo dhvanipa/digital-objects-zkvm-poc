@@ -16,6 +16,8 @@ clap = { version = "4.0", features = ["derive", "env"] }
 tracing = "0.1.40"
 hex = "0.4.3"
 dotenv = "0.15.0"
+sha2 = "0.10.8"
+pow-program = { path = "../pow" }
 
 [build-dependencies]
 sp1-build = "5.0.8"

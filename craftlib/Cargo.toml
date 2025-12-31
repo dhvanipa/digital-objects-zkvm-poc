@@ -2,6 +2,7 @@
 members = [
     "program",
     "script",
+    "pow",
 ]
 resolver = "2"
 

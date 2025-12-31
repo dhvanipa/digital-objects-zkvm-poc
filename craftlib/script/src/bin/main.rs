@@ -1,10 +1,14 @@
-use sp1_sdk::{include_elf, utils, HashableKey, ProverClient, SP1ProofWithPublicValues, SP1Stdin};
+use sha2::{Digest, Sha256};
+use sp1_sdk::{
+    include_elf, utils, HashableKey, ProverClient, SP1Proof, SP1ProofWithPublicValues, SP1Stdin,
+};
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 
 /// The ELF we want to execute inside the zkVM.
 const ELF: &[u8] = include_elf!("fibonacci-program");
+const POW_ELF: &[u8] = include_elf!("pow-program");
 
 fn save_proof_as_json(
     proof: &SP1ProofWithPublicValues,
@@ -28,69 +32,88 @@ fn main() {
     // Setup logging.
     utils::setup_logger();
 
-    // Create an input stream and write '500' to it.
-    let n = 20u32;
-
     // The input stream that the program will read from using `sp1_zkvm::io::read`. Note that the
     // types of the elements in the input stream must match the types being read in the program.
     let mut stdin = SP1Stdin::new();
-    stdin.write(&n);
 
     // Create a `ProverClient` method.
     let client = ProverClient::from_env();
 
-    // Execute the program using the `ProverClient.execute` method, without generating a proof.
-    let (_, report) = client.execute(ELF, &stdin).run().unwrap();
-    println!(
-        "executed program with {} cycles",
-        report.total_instruction_count()
-    );
+    // Setup for the step program
+    let (pk_step, vk_step) = client.setup(POW_ELF);
 
-    // Generate the proof for the given program and input.
-    let (pk, vk) = client.setup(ELF);
-    println!("verifying key ({}) and proving key generated", vk.bytes32());
-    // let mut proof = client.prove(&pk, &stdin).plonk().run().unwrap();
-    let mut proof = client.prove(&pk, &stdin).compressed().run().unwrap();
+    // Choose starting input
+    let base_input: [u8; 32] = Sha256::digest(b"starting input").into();
 
-    println!("generated proof");
+    // --- Step 1 (base) ---
+    stdin.write(&false); // has_prev = false
+    stdin.write(&base_input); // base_input
 
-    // Read and verify the output.
-    //
-    // Note that this output is read from values committed to in the program using
-    // `sp1_zkvm::io::commit`.
-    let n = proof.public_values.read::<u32>();
-    let a = proof.public_values.read::<u32>();
-    let b = proof.public_values.read::<u32>();
+    let mut proof: SP1ProofWithPublicValues = client
+        .prove(&pk_step, &stdin)
+        .compressed()
+        .run()
+        .expect("proving failed");
+    let pv = proof.public_values.read::<pow_program::PV>();
+    println!("Step 1 proof generated with count = {:?}", pv);
 
-    println!("n: {}", n);
-    println!("a: {}", a);
-    println!("b: {}", b);
-
-    // Verify proof and public values
-    client.verify(&proof, &vk).expect("verification failed");
-
-    // // Test a round trip of proof serialization and deserialization.
-    proof
-        .save("proof-with-pis.bin")
-        .expect("saving proof failed");
-    save_proof_as_json(&proof, "proof-with-pis.json").expect("saving proof as json failed");
-
-    // let mut deserialized_proof =
-    //     SP1ProofWithPublicValues::load("proof-with-pis.bin").expect("loading proof failed");
-    let mut deserialized_proof =
-        load_proof_from_json("proof-with-pis.json").expect("loading proof from json failed");
-
-    let n = deserialized_proof.public_values.read::<u32>();
-    let a = deserialized_proof.public_values.read::<u32>();
-    let b = deserialized_proof.public_values.read::<u32>();
-    println!("n (from deserialized proof): {}", n);
-    println!("a (from deserialized proof): {}", a);
-    println!("b (from deserialized proof): {}", b);
-
-    // Verify the deserialized proof.
     client
-        .verify(&deserialized_proof, &vk)
+        .verify(&proof, &vk_step)
         .expect("verification failed");
 
-    println!("successfully generated and verified proof for the program!")
+    // --- Steps 2..N ---
+    let n_steps = 10u32;
+    let mut prev_proof = proof;
+    let mut prev_pv = pv;
+
+    for _ in 2..=n_steps {
+        let mut stdin = SP1Stdin::new();
+        stdin.write(&true); // has_prev = true
+        stdin.write(&prev_pv);
+        let SP1Proof::Compressed(proof) = prev_proof.proof else {
+            panic!()
+        };
+        stdin.write_proof(*proof, vk_step.clone().vk);
+
+        let mut next_proof = client
+            .prove(&pk_step, &stdin)
+            .compressed()
+            .run()
+            .expect("proving failed");
+        let next_pv = next_proof.public_values.read::<pow_program::PV>();
+
+        client
+            .verify(&next_proof, &vk_step)
+            .expect("verification failed");
+
+        prev_proof = next_proof;
+        prev_pv = next_pv;
+    }
+
+    println!("final pv = {:?}", prev_pv);
+
+    // // // Test a round trip of proof serialization and deserialization.
+    // proof
+    //     .save("proof-with-pis.bin")
+    //     .expect("saving proof failed");
+    // save_proof_as_json(&proof, "proof-with-pis.json").expect("saving proof as json failed");
+
+    // // let mut deserialized_proof =
+    // //     SP1ProofWithPublicValues::load("proof-with-pis.bin").expect("loading proof failed");
+    // let mut deserialized_proof =
+    //     load_proof_from_json("proof-with-pis.json").expect("loading proof from json failed");
+
+    // let n = deserialized_proof.public_values.read::<u32>();
+    // let a = deserialized_proof.public_values.read::<u32>();
+    // let b = deserialized_proof.public_values.read::<u32>();
+    // println!("n (from deserialized proof): {}", n);
+    // println!("a (from deserialized proof): {}", a);
+    // println!("b (from deserialized proof): {}", b);
+
+    // // Verify the deserialized proof.
+    // client
+    //     .verify(&deserialized_proof, &vk)
+    //     .expect("verification failed");
+
+    // println!("successfully generated and verified proof for the program!")
 }
