@@ -1,4 +1,4 @@
-use sp1_sdk::{include_elf, utils, ProverClient, SP1ProofWithPublicValues, SP1Stdin};
+use sp1_sdk::{include_elf, utils, HashableKey, ProverClient, SP1ProofWithPublicValues, SP1Stdin};
 
 /// The ELF we want to execute inside the zkVM.
 const ELF: &[u8] = include_elf!("fibonacci-program");
@@ -27,6 +27,7 @@ fn main() {
 
     // Generate the proof for the given program and input.
     let (pk, vk) = client.setup(ELF);
+    println!("verifying key ({}) and proving key generated", vk.bytes32());
     // let mut proof = client.prove(&pk, &stdin).plonk().run().unwrap();
     let mut proof = client.prove(&pk, &stdin).compressed().run().unwrap();
 
