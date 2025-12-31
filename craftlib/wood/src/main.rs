@@ -6,7 +6,7 @@
 // inside the zkVM.
 #![no_main]
 
-use common::{top_u64_be, ObjectInput, ObjectOutput};
+use common::{object_hash_excluding_work, top_u64_be, ObjectInput, ObjectOutput};
 use sha2::{Digest, Sha256};
 sp1_zkvm::entrypoint!(main);
 
@@ -25,12 +25,7 @@ pub fn main() {
         "Blueprint must be wood"
     );
 
-    let object_hash: [u8; 32] = {
-        let mut o = object_inp.object.clone();
-        o.work = [0u8; 32]; // IMPORTANT: exclude work from hash
-        let bytes = bincode::serialize(&o).expect("serialize Object");
-        Sha256::digest(&bytes).into()
-    };
+    let object_hash: [u8; 32] = object_hash_excluding_work(&object_inp.object);
     assert!(
         object_hash == object_inp.hash,
         "Object hash does not match expected hash"

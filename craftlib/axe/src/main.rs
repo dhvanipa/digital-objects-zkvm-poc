@@ -7,16 +7,16 @@
 #![no_main]
 
 use axe_program::constants;
-use common::{top_u64_be, ObjectInput, ObjectOutput};
+use common::{object_hash_excluding_work, top_u64_be, ObjectInput, ObjectOutput};
 use sha2::{Digest, Sha256};
 
 sp1_zkvm::entrypoint!(main);
 
 const WOOD_VKEY_HASH: [u32; 8] = [
-    376483182, 1205337881, 95024023, 1620437505, 353111289, 449151738, 988277475, 1230133866,
+    967837498, 927415804, 215094840, 937742378, 334789233, 318139022, 1730081193, 260594501,
 ];
 const STONE_VKEY_HASH: [u32; 8] = [
-    35812353, 963885749, 1876944878, 1268015266, 220405964, 1246813116, 752373395, 205360449,
+    904330211, 848037444, 1914903530, 1760434633, 822770919, 207072988, 1877340267, 293418241,
 ];
 
 pub fn main() {
@@ -32,12 +32,7 @@ pub fn main() {
         "Blueprint must be axe"
     );
 
-    let object_hash: [u8; 32] = {
-        let mut o = object_inp.object.clone();
-        o.work = [0u8; 32]; // IMPORTANT: exclude work from hash
-        let bytes = bincode::serialize(&o).expect("serialize Object");
-        Sha256::digest(&bytes).into()
-    };
+    let object_hash: [u8; 32] = object_hash_excluding_work(&object_inp.object);
     assert!(
         object_hash == object_inp.hash,
         "Object hash does not match expected hash"

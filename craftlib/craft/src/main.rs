@@ -210,10 +210,10 @@ fn main() {
     let (stone_pk, stone_vk) = client.setup(STONE_ELF);
     let (wood_pk, wood_vk) = client.setup(WOOD_ELF);
     let (axe_pk, axe_vk) = client.setup(AXE_ELF);
-    println!("pow vk {:?}", wood_vk.hash_u32());
-    println!("wood vk {:?}", wood_vk.hash_u32());
-    println!("stone vk {:?}", stone_vk.hash_u32());
-    println!("axe vk {:?}", axe_vk.hash_u32());
+    println!("pow program vk {:?}", pow_vk.hash_u32());
+    println!("wood program vk {:?}", wood_vk.hash_u32());
+    println!("stone program vk {:?}", stone_vk.hash_u32());
+    println!("axe program vk {:?}", axe_vk.hash_u32());
 
     std::fs::create_dir_all("objects").expect("failed to create objects directory");
 
