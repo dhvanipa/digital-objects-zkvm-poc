@@ -6,7 +6,7 @@
 // inside the zkVM.
 #![no_main]
 
-use common::{top_u64_be, ObjectInput, ObjectOutput};
+use common::{difficulty, ObjectInput, ObjectOutput};
 sp1_zkvm::entrypoint!(main);
 
 mod constants;
@@ -26,7 +26,7 @@ pub fn main() {
 
     let object_hash: [u8; 32] = object_inp.object.hash();
     assert!(
-        top_u64_be(object_hash) <= constants::WOOD_MINING_MAX,
+        difficulty(object_hash) <= constants::WOOD_MINING_MAX,
         "Object hash does not meet mining difficulty"
     );
     let empty_work: [u8; 32] = [0u8; 32];

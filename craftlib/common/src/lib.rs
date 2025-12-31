@@ -30,6 +30,6 @@ impl Object {
     }
 }
 
-pub fn top_u64_be(hash: [u8; 32]) -> u64 {
+pub fn difficulty(hash: [u8; 32]) -> u64 {
     u64::from_be_bytes(hash[0..8].try_into().unwrap())
 }

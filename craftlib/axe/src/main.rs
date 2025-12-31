@@ -7,7 +7,7 @@
 #![no_main]
 
 use axe_program::constants;
-use common::{top_u64_be, ObjectInput, ObjectOutput};
+use common::{difficulty, ObjectInput, ObjectOutput};
 use sha2::{Digest, Sha256};
 
 sp1_zkvm::entrypoint!(main);
@@ -17,7 +17,7 @@ const WOOD_VKEY_HASH: [u32; 8] = [
     687550195, 1793166740, 338494431, 1946809861, 1472814873, 1435689528, 136791663, 372439300,
 ];
 const STONE_VKEY_HASH: [u32; 8] = [
-    1314584196, 552375262, 1950159376, 341772153, 1762279404, 962183620, 1653152760, 758019006,
+    526909274, 1664124846, 690861976, 1172288529, 741496193, 1239481263, 419179509, 1174901531,
 ];
 
 pub fn main() {
@@ -35,7 +35,7 @@ pub fn main() {
 
     let object_hash: [u8; 32] = object_inp.object.hash();
     assert!(
-        top_u64_be(object_hash) <= constants::AXE_MINING_MAX,
+        difficulty(object_hash) <= constants::AXE_MINING_MAX,
         "Object hash does not meet mining difficulty"
     );
     let empty_work: [u8; 32] = [0u8; 32];
@@ -44,9 +44,11 @@ pub fn main() {
         "Proof of work output must match object work"
     );
 
+    // TODO: factor out common code for verifying objects
     let wood_input = sp1_zkvm::io::read::<ObjectOutput>();
     let wood_input_digest = Sha256::digest(&bincode::serialize(&wood_input).unwrap());
     sp1_zkvm::lib::verify::verify_sp1_proof(&WOOD_VKEY_HASH, &wood_input_digest.into());
+    // TODO: make this so the inputs can be in any order
     assert!(
         wood_input.hash == object_inp.object.inputs[0],
         "Missing wood input"

@@ -6,7 +6,7 @@ use sp1_sdk::{
 };
 
 use axe_program::constants::{AXE_BLUEPRINT, AXE_MINING_MAX};
-use common::{top_u64_be, Object, ObjectInput, ObjectOutput};
+use common::{difficulty, Object, ObjectInput, ObjectOutput};
 use pow_program::{PowIn, PowOut};
 use stone_program::constants::{STONE_BLUEPRINT, STONE_MINING_MAX};
 use wood_program::constants::{WOOD_BLUEPRINT, WOOD_MINING_MAX};
@@ -35,7 +35,7 @@ fn mine_object(blueprint: &str, max_difficulty: u64, inputs: Vec<[u8; 32]>) -> (
         };
 
         let h = obj.hash();
-        if top_u64_be(h) <= max_difficulty {
+        if difficulty(h) <= max_difficulty {
             return (obj, h);
         }
     }

@@ -6,7 +6,7 @@
 // inside the zkVM.
 #![no_main]
 
-use common::{top_u64_be, ObjectInput, ObjectOutput};
+use common::{difficulty, ObjectInput, ObjectOutput};
 use sha2::{Digest, Sha256};
 
 mod constants;
@@ -33,7 +33,7 @@ pub fn main() {
 
     let object_hash: [u8; 32] = object_inp.object.hash();
     assert!(
-        top_u64_be(object_hash) <= constants::STONE_MINING_MAX,
+        difficulty(object_hash) <= constants::STONE_MINING_MAX,
         "Object hash does not meet mining difficulty"
     );
 
