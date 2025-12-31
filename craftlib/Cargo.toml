@@ -1,10 +1,11 @@
 [workspace]
 members = [
+    "common",
     "craft",
     "pow",
     "stone",
-    "common",
     "wood",
+    "axe",
 ]
 resolver = "2"
 

@@ -18,6 +18,7 @@ common = { path = "../common" }
 pow-program = { path = "../pow" }
 stone-program = { path = "../stone" }
 wood-program = { path = "../wood" }
+axe-program = { path = "../axe" }
 
 [build-dependencies]
 sp1-build = "5.0.8"

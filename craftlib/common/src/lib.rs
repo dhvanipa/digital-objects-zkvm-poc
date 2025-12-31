@@ -1,10 +1,12 @@
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
+pub type ObjectHash = [u8; 32];
+
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Object {
     pub key: String,
-    pub inputs: Vec<String>,
+    pub inputs: Vec<ObjectHash>,
     pub seed: u32,
     pub blueprint: String,
     pub work: [u8; 32],
@@ -12,13 +14,14 @@ pub struct Object {
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct ObjectInput {
-    pub hash: [u8; 32],
+    pub hash: ObjectHash,
     pub object: Object,
 }
 
-#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct ObjectOutput {
-    pub hash: [u8; 32],
+    pub hash: ObjectHash,
+    pub consumed: Vec<ObjectHash>,
 }
 
 pub fn object_hash_excluding_work(obj: &Object) -> [u8; 32] {

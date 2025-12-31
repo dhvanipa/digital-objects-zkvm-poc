@@ -6,7 +6,7 @@
 // inside the zkVM.
 #![no_main]
 
-use common::{top_u64_be, ObjectInput};
+use common::{top_u64_be, ObjectInput, ObjectOutput};
 use sha2::{Digest, Sha256};
 
 mod constants;
@@ -65,5 +65,8 @@ pub fn main() {
     //
     // Behind the scenes, this also compiles down to a system call which handles writing
     // outputs to the prover.
-    sp1_zkvm::io::commit(&object_hash);
+    sp1_zkvm::io::commit(&ObjectOutput {
+        hash: object_inp.hash,
+        consumed: vec![],
+    });
 }
