@@ -34,10 +34,10 @@ pub fn main() {
     );
 
     let object_hash: [u8; 32] = {
-        // Use a deterministic serialization. bincode is deterministic *given the same config*.
-        let bytes = bincode::serialize(&object_inp.object).expect("serialize Object");
-        let digest = Sha256::digest(&bytes);
-        digest.into()
+        let mut o = object_inp.object.clone();
+        o.work = [0u8; 32]; // IMPORTANT: exclude work from hash
+        let bytes = bincode::serialize(&o).expect("serialize Object");
+        Sha256::digest(&bytes).into()
     };
     assert!(
         object_hash == object_inp.hash,

@@ -1,77 +1,121 @@
-use core::num;
-use pow_program::PowIn;
 use sha2::{Digest, Sha256};
 use sp1_sdk::{
     include_elf, utils, HashableKey, ProverClient, SP1Proof, SP1ProofWithPublicValues, SP1Stdin,
 };
-use std::fs::File;
-use std::io::Write;
-use std::path::Path;
 
-/// The ELF we want to execute inside the zkVM.
+use pow_program::{PowIn, PowOut};
+use stone_program::{Object, ObjectInput};
+
+mod lib;
+
 const POW_ELF: &[u8] = include_elf!("pow-program");
 const STONE_ELF: &[u8] = include_elf!("stone-program");
+
+const STONE_MINING_MAX: u64 = 0x0020_0000_0000_0000;
+
+fn top_u64_be(hash: [u8; 32]) -> u64 {
+    u64::from_be_bytes(hash[0..8].try_into().unwrap())
+}
+
+// Hash object *excluding work* by hashing with work = [0; 32].
+fn object_hash_excluding_work(obj: &Object) -> [u8; 32] {
+    let mut o = obj.clone();
+    o.work = [0u8; 32];
+    let bytes = bincode::serialize(&o).expect("serialize Object");
+    Sha256::digest(&bytes).into()
+}
+
+fn mine_stone_object() -> (Object, [u8; 32]) {
+    let key = {
+        let bytes: [u8; 32] = rand::random();
+        hex::encode(bytes)
+    };
+
+    for seed in 0u32..=u32::MAX {
+        let obj = Object {
+            key: key.clone(),
+            inputs: vec![],
+            seed,
+            blueprint: "stone".to_string(),
+            work: [0u8; 32], // placeholder for now
+        };
+
+        let h = object_hash_excluding_work(&obj);
+        if top_u64_be(h) <= STONE_MINING_MAX {
+            return (obj, h);
+        }
+    }
+
+    panic!("failed to mine stone object");
+}
 
 fn main() {
     // Setup logging.
     utils::setup_logger();
 
-    // The input stream that the program will read from using `sp1_zkvm::io::read`. Note that the
-    // types of the elements in the input stream must match the types being read in the program.
-    let mut stdin = SP1Stdin::new();
-
-    // Create a `ProverClient` method.
     let client = ProverClient::from_env();
 
-    // Setup for the step program
-    let (pk_step, vk_step) = client.setup(POW_ELF);
-    println!("Proving key hash (step): {:?}", vk_step.hash_u32());
+    // Setup keys.
+    let (pow_pk, pow_vk) = client.setup(POW_ELF);
+    let (stone_pk, stone_vk) = client.setup(STONE_ELF);
+    println!("pow vk hash_u32 = {:?}", pow_vk.hash_u32());
 
-    // Choose starting input
-    let input: [u8; 32] = Sha256::digest(b"starting input").into();
-    let num_work = 300u32;
+    // 1) Mine (key, seed) to satisfy difficulty.
+    let (mut obj, obj_hash) = mine_stone_object();
+    println!("mined stone: obj={:?}, obj_hash={:?}", obj, obj_hash);
 
-    // --- Step 1 (base) ---
-    stdin.write(&PowIn {
-        n_iters: num_work,
-        input,
+    // 2) Prove PoW with n_iters = 3, input = obj_hash
+    let mut pow_stdin = SP1Stdin::new();
+    pow_stdin.write(&PowIn {
+        n_iters: 3,
+        input: obj_hash,
     });
 
-    let mut proof: SP1ProofWithPublicValues = client
-        .prove(&pk_step, &stdin)
+    let mut pow_proof: SP1ProofWithPublicValues = client
+        .prove(&pow_pk, &pow_stdin)
         .compressed()
         .run()
-        .expect("proving failed");
-    let pv = proof.public_values.read::<pow_program::PowOut>();
+        .expect("pow proving failed");
 
     client
-        .verify(&proof, &vk_step)
-        .expect("verification failed");
+        .verify(&pow_proof, &pow_vk)
+        .expect("pow verify failed");
 
-    println!("final pv = {:?}", pv);
+    // Read PowOut (this must match what your guest reads / bincode-digests).
+    let pow_out: PowOut = pow_proof.public_values.read();
+    println!("pow_out = {:?}", pow_out);
 
-    // // // Test a round trip of proof serialization and deserialization.
-    // proof
-    //     .save("proof-with-pis.bin")
-    //     .expect("saving proof failed");
-    // save_proof_as_json(&proof, "proof-with-pis.json").expect("saving proof as json failed");
+    // Set the object's work to the pow output.
+    obj.work = pow_out.output;
 
-    // // let mut deserialized_proof =
-    // //     SP1ProofWithPublicValues::load("proof-with-pis.bin").expect("loading proof failed");
-    // let mut deserialized_proof =
-    //     load_proof_from_json("proof-with-pis.json").expect("loading proof from json failed");
+    // 3) Prove stone program
+    // stone guest reads: ObjectInput, then PowOut, then calls verify_sp1_proof (reads proof from proof stream)
+    let mut stone_stdin = SP1Stdin::new();
 
-    // let n = deserialized_proof.public_values.read::<u32>();
-    // let a = deserialized_proof.public_values.read::<u32>();
-    // let b = deserialized_proof.public_values.read::<u32>();
-    // println!("n (from deserialized proof): {}", n);
-    // println!("a (from deserialized proof): {}", a);
-    // println!("b (from deserialized proof): {}", b);
+    stone_stdin.write(&ObjectInput {
+        hash: obj_hash,
+        object: obj.clone(),
+    });
+    stone_stdin.write(&pow_out);
 
-    // // Verify the deserialized proof.
-    // client
-    //     .verify(&deserialized_proof, &vk)
-    //     .expect("verification failed");
+    let SP1Proof::Compressed(pow_proof) = pow_proof.proof else {
+        panic!()
+    };
+    stone_stdin.write_proof(*pow_proof, pow_vk.clone().vk);
 
-    // println!("successfully generated and verified proof for the program!")
+    let mut stone_proof: SP1ProofWithPublicValues = client
+        .prove(&stone_pk, &stone_stdin)
+        .compressed()
+        .run()
+        .expect("stone proving failed");
+
+    client
+        .verify(&stone_proof, &stone_vk)
+        .expect("stone verify failed");
+
+    let committed_hash: [u8; 32] = stone_proof.public_values.read();
+    println!("stone committed hash = {:?}", committed_hash);
+
+    lib::save_object_as_json(&obj, &stone_proof, "stone.json").expect("failed to save stone");
+    println!("saved stone to stone.json");
 }
