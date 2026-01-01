@@ -24,12 +24,12 @@ pub fn main() {
         "Blueprint must be wood"
     );
 
-    let object_hash: [u8; 32] = object_inp.object.hash();
+    let object_hash = object_inp.object.hash();
     assert!(
-        difficulty(object_hash) <= constants::WOOD_MINING_MAX,
+        difficulty(&object_hash) <= constants::WOOD_MINING_MAX,
         "Object hash does not meet mining difficulty"
     );
-    let empty_work: [u8; 32] = [0u8; 32];
+    let empty_work = hex::encode([0u8; 32]);
     assert!(
         object_inp.work == empty_work,
         "Proof of work output must match object work"

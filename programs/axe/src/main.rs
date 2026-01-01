@@ -14,10 +14,10 @@ sp1_zkvm::entrypoint!(main);
 
 // TODO: find a way to auto-generate and share these constants
 const WOOD_VKEY_HASH: [u32; 8] = [
-    919015992, 395097716, 866614838, 1597120514, 137724199, 1209820302, 361186600, 287557146,
+    92693219, 536712614, 913175624, 1780277906, 1719680246, 1776819973, 1022706495, 931408120,
 ];
 const STONE_VKEY_HASH: [u32; 8] = [
-    1578213757, 1706290819, 1575616880, 65020892, 1277508672, 1441475293, 1102404124, 1971099324,
+    44584754, 336036070, 1781962132, 1150135370, 439676485, 1927184313, 1849913332, 956193253,
 ];
 
 pub fn main() {
@@ -33,12 +33,12 @@ pub fn main() {
         "Blueprint must be axe"
     );
 
-    let object_hash: [u8; 32] = object_inp.object.hash();
+    let object_hash = object_inp.object.hash();
     assert!(
-        difficulty(object_hash) <= constants::AXE_MINING_MAX,
+        difficulty(&object_hash) <= constants::AXE_MINING_MAX,
         "Object hash does not meet mining difficulty"
     );
-    let empty_work: [u8; 32] = [0u8; 32];
+    let empty_work = hex::encode([0u8; 32]);
     assert!(
         object_inp.work == empty_work,
         "Proof of work output must match object work"
@@ -46,8 +46,9 @@ pub fn main() {
 
     // TODO: factor out common code for verifying objects
     let wood_input = sp1_zkvm::io::read::<ObjectOutput>();
-    let wood_input_digest = Sha256::digest(&bincode::serialize(&wood_input).unwrap());
-    sp1_zkvm::lib::verify::verify_sp1_proof(&WOOD_VKEY_HASH, &wood_input_digest.into());
+    let wood_input_digest: [u8; 32] =
+        Sha256::digest(&bincode::serialize(&wood_input).unwrap()).into();
+    sp1_zkvm::lib::verify::verify_sp1_proof(&WOOD_VKEY_HASH, &wood_input_digest);
     // TODO: make this so the inputs can be in any order
     assert!(
         wood_input.hash == object_inp.object.inputs[0],
@@ -55,8 +56,9 @@ pub fn main() {
     );
 
     let stone_input = sp1_zkvm::io::read::<ObjectOutput>();
-    let stone_input_digest = Sha256::digest(&bincode::serialize(&stone_input).unwrap());
-    sp1_zkvm::lib::verify::verify_sp1_proof(&STONE_VKEY_HASH, &stone_input_digest.into());
+    let stone_input_digest: [u8; 32] =
+        Sha256::digest(&bincode::serialize(&stone_input).unwrap()).into();
+    sp1_zkvm::lib::verify::verify_sp1_proof(&STONE_VKEY_HASH, &stone_input_digest);
     assert!(
         stone_input.hash == object_inp.object.inputs[1],
         "Missing stone input"

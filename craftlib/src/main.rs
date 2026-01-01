@@ -20,7 +20,7 @@ const STONE_ELF: &[u8] = include_elf!("stone-program");
 const WOOD_ELF: &[u8] = include_elf!("wood-program");
 const AXE_ELF: &[u8] = include_elf!("axe-program");
 
-fn mine_object(blueprint: &str, max_difficulty: u64, inputs: Vec<[u8; 32]>) -> (Object, [u8; 32]) {
+fn mine_object(blueprint: &str, max_difficulty: u64, inputs: Vec<String>) -> (Object, String) {
     let key = {
         let bytes: [u8; 32] = rand::random();
         hex::encode(bytes)
@@ -35,7 +35,7 @@ fn mine_object(blueprint: &str, max_difficulty: u64, inputs: Vec<[u8; 32]>) -> (
         };
 
         let h = obj.hash();
-        if difficulty(h) <= max_difficulty {
+        if difficulty(&h) <= max_difficulty {
             return (obj, h);
         }
     }
@@ -48,7 +48,7 @@ fn create_pow_proof(
     pow_pk: &sp1_sdk::SP1ProvingKey,
     pow_vk: &sp1_sdk::SP1VerifyingKey,
     n_iters: u32,
-    input: [u8; 32],
+    input: String,
 ) -> (PowOut, SP1Proof) {
     let mut pow_stdin = SP1Stdin::new();
     pow_stdin.write(&PowIn { n_iters, input });
@@ -80,14 +80,14 @@ fn create_stone_object(
     stone_vk: &sp1_sdk::SP1VerifyingKey,
 ) -> ObjectJson {
     let (obj, obj_hash) = mine_object(STONE_BLUEPRINT, STONE_MINING_MAX, vec![]);
-    println!("Mined stone: seed={}, hash={:x?}", obj.seed, obj_hash);
+    println!("Mined stone: seed={}, hash={}", obj.seed, obj_hash);
 
     let (pow_out, pow_proof) = create_pow_proof(client, pow_pk, pow_vk, 3, obj_hash);
 
     let mut stone_stdin = SP1Stdin::new();
     stone_stdin.write(&ObjectInput {
         object: obj.clone(),
-        work: pow_out.output,
+        work: pow_out.output.clone(),
     });
     stone_stdin.write(&pow_out);
 
@@ -107,12 +107,12 @@ fn create_stone_object(
         .expect("stone verify failed");
 
     let committed_output: ObjectOutput = stone_proof.public_values.read();
-    println!("Stone committed hash: {:x?}", committed_output.hash);
+    println!("Stone committed hash: {}", committed_output.hash);
 
     ObjectJson {
         object: obj,
         hash: committed_output.hash,
-        work: pow_out.output,
+        work: pow_out.output.clone(),
         proof: stone_proof,
     }
 }
@@ -123,12 +123,12 @@ fn create_wood_object(
     wood_vk: &sp1_sdk::SP1VerifyingKey,
 ) -> ObjectJson {
     let (obj, obj_hash) = mine_object(WOOD_BLUEPRINT, WOOD_MINING_MAX, vec![]);
-    println!("Mined wood: seed={}, hash={:x?}", obj.seed, obj_hash);
+    println!("Mined wood: seed={}, hash={}", obj.seed, obj_hash);
 
     let mut wood_stdin = SP1Stdin::new();
     wood_stdin.write(&ObjectInput {
         object: obj.clone(),
-        work: [0u8; 32],
+        work: hex::encode([0u8; 32]),
     });
 
     let mut wood_proof: SP1ProofWithPublicValues = client
@@ -142,12 +142,12 @@ fn create_wood_object(
         .expect("wood verify failed");
 
     let committed_output: ObjectOutput = wood_proof.public_values.read();
-    println!("Wood committed hash: {:x?}", committed_output.hash);
+    println!("Wood committed hash: {}", committed_output.hash);
 
     ObjectJson {
         object: obj,
         hash: committed_output.hash,
-        work: [0u8; 32],
+        work: hex::encode([0u8; 32]),
         proof: wood_proof,
     }
 }
@@ -158,18 +158,22 @@ fn create_axe_object(
     axe_vk: &sp1_sdk::SP1VerifyingKey,
     stone_vk: &sp1_sdk::SP1VerifyingKey,
     wood_vk: &sp1_sdk::SP1VerifyingKey,
-    wood_hash: [u8; 32],
+    wood_hash: String,
     wood_proof: SP1ProofWithPublicValues,
-    stone_hash: [u8; 32],
+    stone_hash: String,
     stone_proof: SP1ProofWithPublicValues,
 ) -> ObjectJson {
-    let (obj, obj_hash) = mine_object(AXE_BLUEPRINT, AXE_MINING_MAX, vec![wood_hash, stone_hash]);
-    println!("Created axe: seed={}, hash={:x?}", obj.seed, obj_hash);
+    let (obj, obj_hash) = mine_object(
+        AXE_BLUEPRINT,
+        AXE_MINING_MAX,
+        vec![wood_hash.clone(), stone_hash.clone()],
+    );
+    println!("Created axe: seed={}, hash={}", obj.seed, obj_hash);
 
     let mut axe_stdin = SP1Stdin::new();
     axe_stdin.write(&ObjectInput {
         object: obj.clone(),
-        work: [0u8; 32],
+        work: hex::encode([0u8; 32]),
     });
 
     let wood_output = ObjectOutput {
@@ -205,12 +209,12 @@ fn create_axe_object(
         .expect("axe verify failed");
 
     let committed_output: ObjectOutput = axe_proof.public_values.read();
-    println!("Axe committed hash: {:x?}", committed_output.hash);
+    println!("Axe committed hash: {}", committed_output.hash);
 
     ObjectJson {
         object: obj,
         hash: committed_output.hash,
-        work: [0u8; 32],
+        work: hex::encode([0u8; 32]),
         proof: axe_proof,
     }
 }

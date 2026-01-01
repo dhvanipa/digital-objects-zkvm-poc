@@ -7,3 +7,4 @@ edition = "2021"
 sp1-zkvm = { version = "5.0.8", features = ["verify"] }
 sha2 = { workspace = true }
 serde = { workspace = true }
+hex = { workspace = true }

@@ -7,7 +7,7 @@ use std::{fs::File, io::Write, path::Path};
 pub struct ObjectJson {
     pub object: Object,
     pub hash: ObjectHash,
-    pub work: [u8; 32],
+    pub work: String,
     pub proof: SP1ProofWithPublicValues,
 }
 

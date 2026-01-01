@@ -13,7 +13,7 @@ use sha2::{Digest, Sha256};
 pub fn main() {
     let inp: PowIn = sp1_zkvm::io::read::<PowIn>();
 
-    let mut cur = inp.input;
+    let mut cur: [u8; 32] = hex::decode(&inp.input).expect("valid hex input").try_into().expect("32 bytes");
     for _ in 0..inp.n_iters {
         let mut h = Sha256::new();
         h.update(cur);
@@ -23,6 +23,6 @@ pub fn main() {
     sp1_zkvm::io::commit(&PowOut {
         n_iters: inp.n_iters,
         input: inp.input,
-        output: cur,
+        output: hex::encode(cur),
     });
 }

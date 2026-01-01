@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
-pub type ObjectHash = [u8; 32];
+pub type ObjectHash = String;
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Object {
@@ -14,7 +14,7 @@ pub struct Object {
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct ObjectInput {
     pub object: Object,
-    pub work: [u8; 32],
+    pub work: String,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
@@ -24,12 +24,14 @@ pub struct ObjectOutput {
 }
 
 impl Object {
-    pub fn hash(&self) -> [u8; 32] {
+    pub fn hash(&self) -> String {
         let bytes = bincode::serialize(&self.clone()).expect("serialize Object");
-        Sha256::digest(&bytes).into()
+        let digest: [u8; 32] = Sha256::digest(&bytes).into();
+        hex::encode(digest)
     }
 }
 
-pub fn difficulty(hash: [u8; 32]) -> u64 {
-    u64::from_be_bytes(hash[0..8].try_into().unwrap())
+pub fn difficulty(hash: &str) -> u64 {
+    let bytes = hex::decode(hash).expect("valid hex hash");
+    u64::from_be_bytes(bytes[0..8].try_into().unwrap())
 }

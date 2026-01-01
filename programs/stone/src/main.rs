@@ -15,7 +15,7 @@ sp1_zkvm::entrypoint!(main);
 
 // TODO: find a way to auto-generate and share these constants
 const POW_VKEY_HASH: [u32; 8] = [
-    1984960963, 633242056, 1991409535, 2009474444, 43407353, 1711027148, 1412304692, 1001710625,
+    1183893413, 511074235, 1935794653, 1649313639, 181545145, 872198013, 1768828641, 1893132664,
 ];
 
 pub fn main() {
@@ -31,15 +31,16 @@ pub fn main() {
         "Blueprint must be stone"
     );
 
-    let object_hash: [u8; 32] = object_inp.object.hash();
+    let object_hash = object_inp.object.hash();
     assert!(
-        difficulty(object_hash) <= constants::STONE_MINING_MAX,
+        difficulty(&object_hash) <= constants::STONE_MINING_MAX,
         "Object hash does not meet mining difficulty"
     );
 
     let pow_public_values = sp1_zkvm::io::read::<pow_program::PowOut>();
-    let public_values_digest = Sha256::digest(&bincode::serialize(&pow_public_values).unwrap());
-    sp1_zkvm::lib::verify::verify_sp1_proof(&POW_VKEY_HASH, &public_values_digest.into());
+    let public_values_digest: [u8; 32] =
+        Sha256::digest(&bincode::serialize(&pow_public_values).unwrap()).into();
+    sp1_zkvm::lib::verify::verify_sp1_proof(&POW_VKEY_HASH, &public_values_digest);
     assert!(
         pow_public_values.n_iters == 3,
         "Proof of work must have 3 iterations"
