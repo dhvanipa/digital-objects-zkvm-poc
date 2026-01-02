@@ -21,3 +21,4 @@ pgo-data.profdata
 # Generated objects
 objects/
 commitments/
+blobs/
