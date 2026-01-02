@@ -10,6 +10,8 @@ use sp1_sdk::{
 
 const COMMIT_ELF: &[u8] = include_elf!("commit-program");
 
+mod eth;
+
 fn commit_objects(
     client: &EnvProver,
     object_jsons: Vec<ObjectJson>,
