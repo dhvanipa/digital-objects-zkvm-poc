@@ -67,7 +67,29 @@ fn main() {
     let (commit_pk, commit_vk) = client.setup(COMMIT_ELF);
     println!("commit program vk {:?}", commit_vk.hash_u32());
 
-    std::fs::create_dir_all("objects").expect("failed to create objects directory");
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() < 2 {
+        eprintln!("Usage: {} <object1.json> [object2.json] ...", args[0]);
+        std::process::exit(1);
+    }
+
+    let mut objects: Vec<ObjectJson> = Vec::new();
+    for path in &args[1..] {
+        match ObjectJson::from_json_file(path) {
+            Ok(obj_json) => {
+                println!("Loaded object from {}", path);
+                objects.push(obj_json);
+            }
+            Err(e) => {
+                eprintln!("Failed to load {}: {}", path, e);
+                std::process::exit(1);
+            }
+        }
+    }
+
+    let (committed_output, _commit_proof) =
+        commit_objects(&client, objects, &commit_pk, &commit_vk);
+    println!("Committed output: {:?}", committed_output);
 
     println!("\n✓ All objects committed successfully!");
 }
