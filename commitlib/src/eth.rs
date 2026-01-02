@@ -1,8 +1,10 @@
 use std::str::FromStr;
 
 use alloy::{
-    consensus::{SidecarBuilder, SimpleCoder},
-    eips::eip4844::DATA_GAS_PER_BLOB,
+    consensus::{
+        EnvKzgSettings, EthereumTxEnvelope, SidecarBuilder, SimpleCoder, TxEip4844WithSidecar,
+    },
+    eips::{eip4844::DATA_GAS_PER_BLOB, eip7594::BlobTransactionSidecarEip7594, Encodable2718},
     network::{TransactionBuilder, TransactionBuilder4844},
     primitives::{Address, TxHash},
     providers::{Provider, ProviderBuilder},
@@ -37,8 +39,21 @@ pub async fn send_blob_tx(blob_data: &[u8]) -> Result<TxHash, Box<dyn std::error
         .with_to(receiver)
         .with_blob_sidecar(sidecar);
 
+    // Fill the transaction (e.g., nonce, gas, etc.) using the provider and convert it to an
+    // envelope.
+    let envelope = provider.fill(tx).await?.try_into_envelope()?;
+
+    // Convert the envelope into an EIP-7594 transaction by converting the sidecar.
+    let tx: EthereumTxEnvelope<TxEip4844WithSidecar<BlobTransactionSidecarEip7594>> =
+        envelope.try_into_pooled()?.try_map_eip4844(|tx| {
+            tx.try_map_sidecar(|sidecar| sidecar.try_into_7594(EnvKzgSettings::Default.get()))
+        })?;
+    println!("Sending transaction... {}", tx.hash());
+
+    let encoded_tx = tx.encoded_2718();
+
     // Send the transaction and wait for the broadcast.
-    let pending_tx = provider.send_transaction(tx).await?;
+    let pending_tx = provider.send_raw_transaction(&encoded_tx).await?;
 
     println!("Pending transaction... {}", pending_tx.tx_hash());
 

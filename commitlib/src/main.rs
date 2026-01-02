@@ -1,6 +1,7 @@
-use ::utils::ObjectJson;
+use ::utils::{save_proof_as_json, ObjectJson};
 use commit_program::{CommitIn, CommitOut, ObjectOutputWithType};
 use common::ObjectOutput;
+use sha2::{Digest, Sha256};
 use sp1_sdk::{
     include_elf, utils, EnvProver, HashableKey, ProverClient, SP1Proof, SP1ProofWithPublicValues,
     SP1Stdin,
@@ -65,6 +66,8 @@ async fn main() {
 
     let client = ProverClient::from_env();
 
+    std::fs::create_dir_all("commitments").expect("failed to create commitments directory");
+
     println!("Setting up proving/verifying keys...");
     let (commit_pk, commit_vk) = client.setup(COMMIT_ELF);
     println!("commit program vk {:?}", commit_vk.hash_u32());
@@ -92,10 +95,22 @@ async fn main() {
     let (committed_output, commit_proof) = commit_objects(&client, objects, &commit_pk, &commit_vk);
     println!("Committed output: {:?}", committed_output);
 
-    let commitment_blob_data: Vec<u8> =
-        bincode::serialize(&commit_proof).expect("failed to serialize commit proof");
+    let commit_proof_hash: [u8; 32] = Sha256::digest(
+        &bincode::serialize(&commit_proof).expect("Failed to serialize commit proof"),
+    )
+    .into();
 
-    send_blob_tx(&commitment_blob_data)
+    save_proof_as_json(
+        &commit_proof,
+        &format!("commitments/{}.json", hex::encode(commit_proof_hash)),
+    )
+    .expect("failed to save commit proof");
+
+    // Note: We cannot send the full commit proof as blob data due to size limits.
+    // let commitment_blob_data: Vec<u8> =
+    //     bincode::serialize(&commit_proof).expect("failed to serialize commit proof");
+
+    send_blob_tx(&commit_proof_hash)
         .await
         .expect("failed to send blob transaction");
 
