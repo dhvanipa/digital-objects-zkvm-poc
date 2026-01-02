@@ -8,6 +8,8 @@ use sp1_sdk::{
     SP1Stdin,
 };
 
+use crate::eth::send_blob_tx;
+
 const COMMIT_ELF: &[u8] = include_elf!("commit-program");
 
 mod eth;
@@ -59,8 +61,15 @@ fn commit_objects(
     (committed_output, commit_proof)
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     utils::setup_logger();
+
+    let commitment_blob_data: Vec<u8> = Vec::new();
+
+    send_blob_tx(&commitment_blob_data)
+        .await
+        .expect("failed to send blob transaction");
 
     let client = ProverClient::from_env();
 

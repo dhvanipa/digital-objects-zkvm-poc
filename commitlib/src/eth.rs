@@ -1,27 +1,30 @@
-use dotenvy::EnvLoader;
+use std::str::FromStr;
 
 use alloy::{
     consensus::{SidecarBuilder, SimpleCoder},
     eips::eip4844::DATA_GAS_PER_BLOB,
     network::{TransactionBuilder, TransactionBuilder4844},
-    primitives::TxHash,
+    primitives::{Address, TxHash},
     providers::{Provider, ProviderBuilder},
     rpc::types::TransactionRequest,
     signers::local::PrivateKeySigner,
 };
 
 pub async fn send_blob_tx(blob_data: &[u8]) -> Result<TxHash, Box<dyn std::error::Error>> {
-    let env_map = EnvLoader::new().load()?;
+    let signer: PrivateKeySigner = dotenvy::var("PRIVATE_KEY")?.parse()?;
 
-    let signer: PrivateKeySigner = env_map.var("PRIVATE_KEY")?.parse();
+    let rpc_url: String = dotenvy::var("RPC_URL")?;
+    println!("Connecting to RPC URL: {}", rpc_url);
+
     let provider = ProviderBuilder::new()
         .wallet(signer.clone())
-        .connect(env_map.var("RPC_URL")?)
+        .connect(&rpc_url)
         .await?;
     let latest_block = provider.get_block_number().await?;
     println!("Latest block number: {latest_block}");
+
     let sender = signer.address();
-    let receiver = env_map.var("TO_ADDRESS")?.parse()?;
+    let receiver: Address = Address::from_str(&dotenvy::var("TO_ADDRESS")?)?;
     println!("Sender address: {sender}");
     println!("Receiver address: {receiver}");
 
