@@ -39,8 +39,8 @@ use tracing::{debug, info, trace};
 
 #[derive(Debug)]
 pub struct State {
-    created_items: HashSet<ObjectHash>,
-    consumed_items: HashSet<ObjectHash>,
+    created_objects: HashSet<ObjectHash>,
+    consumed_objects: HashSet<ObjectHash>,
 }
 
 pub struct Node {
@@ -78,8 +78,8 @@ impl Node {
         let rpc_cli = RootProvider::<Ethereum>::new_http(rpc_url.parse()?);
 
         let state = State {
-            created_items: HashSet::new(),
-            consumed_items: HashSet::new(),
+            created_objects: HashSet::new(),
+            consumed_objects: HashSet::new(),
         };
         Ok(Self {
             spclient,
@@ -224,9 +224,9 @@ impl Node {
                 .unwrap_or_default(),
         );
         info!(
-            "current state: created_items={:?}, consumed_items={:?}, ",
-            self.state.read().expect("lock").created_items,
-            self.state.read().expect("lock").consumed_items,
+            "current state: created_objects={:?}, consumed_objects={:?}, ",
+            self.state.read().expect("lock").created_objects,
+            self.state.read().expect("lock").consumed_objects,
         );
 
         let has_kzg_blob_commitments = match beacon_block.blob_kzg_commitments {
@@ -330,33 +330,33 @@ impl Node {
 
         // Check that output is unique
         for item in &commit_out.created {
-            if state.created_items.contains(item) {
-                bail!("item {} exists in created_items", item);
+            if state.created_objects.contains(item) {
+                bail!("item {} exists in created_objects", item);
             }
         }
 
         // Check that inputs are unique
         for item in &commit_out.consumed {
-            if !state.created_items.contains(item) {
-                bail!("item {} doesn't exist in created_items", item);
+            if !state.created_objects.contains(item) {
+                bail!("item {} doesn't exist in created_objects", item);
             }
 
-            if state.consumed_items.contains(item) {
-                bail!("item {} exists in consumed_items", item);
+            if state.consumed_objects.contains(item) {
+                bail!("item {} exists in consumed_objects", item);
             }
         }
 
-        // Register items
+        // Register objects
         for item in &commit_out.created {
-            state.created_items.insert(item.clone());
+            state.created_objects.insert(item.clone());
         }
         for item in &commit_out.consumed {
-            state.consumed_items.insert(item.clone());
+            state.consumed_objects.insert(item.clone());
         }
 
         info!(
-            "state update: created_items={:?}, consumed_items={:?}, ",
-            state.created_items, state.consumed_items,
+            "state update: created_objects={:?}, consumed_objects={:?}, ",
+            state.created_objects, state.consumed_objects,
         );
         Ok(())
     }
