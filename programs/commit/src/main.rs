@@ -9,21 +9,15 @@ sp1_zkvm::entrypoint!(main);
 
 use axe_program::constants::AXE_BLUEPRINT;
 use commit_program::{CommitIn, CommitOut};
-use common::{ObjectHash, ObjectOutput};
+use common::{hex_to_vk_digest, ObjectHash, ObjectOutput};
 use sha2::{Digest, Sha256};
 use stone_program::constants::STONE_BLUEPRINT;
 use wood_program::constants::WOOD_BLUEPRINT;
 
-// TODO: find a way to auto-generate and share these constants
-const WOOD_VKEY_HASH: [u32; 8] = [
-    109196305, 262471982, 483527702, 357546556, 1131681982, 211602804, 1093354595, 1784903095,
-];
-const STONE_VKEY_HASH: [u32; 8] = [
-    798238549, 1320429416, 1994312076, 723619578, 1320567298, 1561260577, 1612222587, 890584611,
-];
-const AXE_VKEY_HASH: [u32; 8] = [
-    127085715, 319382426, 2006292001, 974531127, 1273546570, 224535709, 1425381621, 1084853484,
-];
+// TODO: find a way to auto-generate and share these constants, also store without having to decode
+const WOOD_VKEY_HASH: &str = "1dc5f3be73dbe87875287d81592e666159cd2bb91b9a30a54e4c70c570523f45";
+const STONE_VKEY_HASH: &str = "5d0865c4708a2df7685dee2f0c98e52d32674eee126a276c127276bd6e3d7ad2";
+const AXE_VKEY_HASH: &str = "2656118a5e39427a0943d08447d372cf1c6d276b396f90f31cbc87706db3c6ca";
 
 pub fn main() {
     let inp = sp1_zkvm::io::read::<CommitIn>();
@@ -41,13 +35,22 @@ pub fn main() {
         // Verify proof
         match object.blueprint.as_str() {
             WOOD_BLUEPRINT => {
-                sp1_zkvm::lib::verify::verify_sp1_proof(&WOOD_VKEY_HASH, &object_output_digest);
+                sp1_zkvm::lib::verify::verify_sp1_proof(
+                    &hex_to_vk_digest(WOOD_VKEY_HASH),
+                    &object_output_digest,
+                );
             }
             STONE_BLUEPRINT => {
-                sp1_zkvm::lib::verify::verify_sp1_proof(&STONE_VKEY_HASH, &object_output_digest);
+                sp1_zkvm::lib::verify::verify_sp1_proof(
+                    &hex_to_vk_digest(STONE_VKEY_HASH),
+                    &object_output_digest,
+                );
             }
             AXE_BLUEPRINT => {
-                sp1_zkvm::lib::verify::verify_sp1_proof(&AXE_VKEY_HASH, &object_output_digest);
+                sp1_zkvm::lib::verify::verify_sp1_proof(
+                    &hex_to_vk_digest(AXE_VKEY_HASH),
+                    &object_output_digest,
+                );
             }
             _ => panic!("unknown blueprint"),
         }

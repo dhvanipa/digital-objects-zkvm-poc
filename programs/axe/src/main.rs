@@ -7,18 +7,14 @@
 #![no_main]
 
 use axe_program::constants;
-use common::{difficulty, ObjectInput, ObjectOutput};
+use common::{difficulty, hex_to_vk_digest, ObjectInput, ObjectOutput};
 use sha2::{Digest, Sha256};
 
 sp1_zkvm::entrypoint!(main);
 
-// TODO: find a way to auto-generate and share these constants
-const WOOD_VKEY_HASH: [u32; 8] = [
-    109196305, 262471982, 483527702, 357546556, 1131681982, 211602804, 1093354595, 1784903095,
-];
-const STONE_VKEY_HASH: [u32; 8] = [
-    798238549, 1320429416, 1994312076, 723619578, 1320567298, 1561260577, 1612222587, 890584611,
-];
+// TODO: find a way to auto-generate and share these constants, also store without having to decode
+const WOOD_VKEY_HASH: &str = "1dc5f3be73dbe87875287d81592e666159cd2bb91b9a30a54e4c70c570523f45";
+const STONE_VKEY_HASH: &str = "5d0865c4708a2df7685dee2f0c98e52d32674eee126a276c127276bd6e3d7ad2";
 
 pub fn main() {
     // Read an input to the program.
@@ -48,7 +44,7 @@ pub fn main() {
     let wood_input = sp1_zkvm::io::read::<ObjectOutput>();
     let wood_input_digest: [u8; 32] =
         Sha256::digest(&bincode::serialize(&wood_input).unwrap()).into();
-    sp1_zkvm::lib::verify::verify_sp1_proof(&WOOD_VKEY_HASH, &wood_input_digest);
+    sp1_zkvm::lib::verify::verify_sp1_proof(&hex_to_vk_digest(WOOD_VKEY_HASH), &wood_input_digest);
     // TODO: make this so the inputs can be in any order
     assert!(
         wood_input.hash == object_inp.object.inputs[0],
@@ -58,7 +54,10 @@ pub fn main() {
     let stone_input = sp1_zkvm::io::read::<ObjectOutput>();
     let stone_input_digest: [u8; 32] =
         Sha256::digest(&bincode::serialize(&stone_input).unwrap()).into();
-    sp1_zkvm::lib::verify::verify_sp1_proof(&STONE_VKEY_HASH, &stone_input_digest);
+    sp1_zkvm::lib::verify::verify_sp1_proof(
+        &hex_to_vk_digest(STONE_VKEY_HASH),
+        &stone_input_digest,
+    );
     assert!(
         stone_input.hash == object_inp.object.inputs[1],
         "Missing stone input"

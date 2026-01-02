@@ -6,17 +6,15 @@
 // inside the zkVM.
 #![no_main]
 
-use common::{difficulty, ObjectInput, ObjectOutput};
+use common::{difficulty, hex_to_vk_digest, ObjectInput, ObjectOutput};
 use sha2::{Digest, Sha256};
 
 mod constants;
 
 sp1_zkvm::entrypoint!(main);
 
-// TODO: find a way to auto-generate and share these constants
-const POW_VKEY_HASH: [u32; 8] = [
-    1187928552, 1830467042, 1921204169, 530199403, 1883161345, 29298083, 1615915134, 1929779142,
-];
+// TODO: find a way to auto-generate and share these constants, also store without having to decode
+const POW_VKEY_HASH: &str = "46ce59e86d1ab5e272833fc91f9a336b703ec30101bf0da36050e87e730617c6";
 
 pub fn main() {
     // Read an input to the program.
@@ -40,7 +38,10 @@ pub fn main() {
     let pow_public_values = sp1_zkvm::io::read::<pow_program::PowOut>();
     let public_values_digest: [u8; 32] =
         Sha256::digest(&bincode::serialize(&pow_public_values).unwrap()).into();
-    sp1_zkvm::lib::verify::verify_sp1_proof(&POW_VKEY_HASH, &public_values_digest);
+    sp1_zkvm::lib::verify::verify_sp1_proof(
+        &hex_to_vk_digest(POW_VKEY_HASH),
+        &public_values_digest,
+    );
     assert!(
         pow_public_values.n_iters == 3,
         "Proof of work must have 3 iterations"

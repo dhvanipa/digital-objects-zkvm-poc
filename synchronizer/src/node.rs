@@ -61,7 +61,7 @@ impl Node {
 
         println!("Setting up proving/verifying keys...");
         let (_commit_pk, commit_vk) = spclient.setup(COMMIT_ELF);
-        println!("commit program vk {:?}", commit_vk.hash_u32());
+        println!("commit program vk {}", hex::encode(commit_vk.hash_bytes()));
 
         let http_cli = reqwest::Client::builder()
             .timeout(Duration::from_secs(8))

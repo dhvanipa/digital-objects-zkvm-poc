@@ -70,7 +70,7 @@ async fn main() {
 
     println!("Setting up proving/verifying keys...");
     let (commit_pk, commit_vk) = client.setup(COMMIT_ELF);
-    println!("commit program vk {:?}", commit_vk.hash_u32());
+    println!("commit program vk {}", hex::encode(commit_vk.hash_bytes()));
 
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 2 {
