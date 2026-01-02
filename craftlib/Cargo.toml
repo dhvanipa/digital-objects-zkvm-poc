@@ -5,7 +5,6 @@ edition = "2021"
 
 [dependencies]
 sp1-sdk = "5.0.8"
-serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 serde = { version = "1.0.200", default-features = false, features = ["derive"] }
 clap = { version = "4.0", features = ["derive", "env"] }
 tracing = "0.1.40"
@@ -14,7 +13,8 @@ dotenv = "0.15.0"
 sha2 = "0.10.8"
 rand = "0.8"
 bincode = { workspace = true }
-common = { path = "../common" }
+utils = { path = "../utils" }
+common = { path = "../programs/common" }
 pow-program = { path = "../programs/pow" }
 wood-program = { path = "../programs/wood" }
 stone-program = { path = "../programs/stone" }

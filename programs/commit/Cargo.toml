@@ -9,7 +9,7 @@ sha2 = { workspace = true }
 serde = { workspace = true }
 hex = { workspace = true }
 bincode = { workspace = true }
-common = { path = "../../common" }
+common = { path = "../common" }
 wood-program = { path = "../wood" }
 stone-program = { path = "../stone" }
 axe-program = { path = "../axe" }

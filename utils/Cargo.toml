@@ -1,0 +1,13 @@
+[package]
+name = "utils"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
+bincode = { workspace = true }
+sha2 = { workspace = true }
+hex = { workspace = true }
+sp1-sdk = "5.0.8"
+common = { path = "../programs/common" }

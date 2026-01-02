@@ -5,15 +5,12 @@ use sp1_sdk::{
     SP1Stdin,
 };
 
+use ::utils::ObjectJson;
 use axe_program::constants::{AXE_BLUEPRINT, AXE_MINING_MAX};
 use common::{difficulty, Object, ObjectInput, ObjectOutput};
 use pow_program::{PowIn, PowOut};
 use stone_program::constants::{STONE_BLUEPRINT, STONE_MINING_MAX};
 use wood_program::constants::{WOOD_BLUEPRINT, WOOD_MINING_MAX};
-
-use crate::save::ObjectJson;
-
-mod save;
 
 const POW_ELF: &[u8] = include_elf!("pow-program");
 const STONE_ELF: &[u8] = include_elf!("stone-program");
@@ -176,10 +173,7 @@ fn create_axe_object(
         work: hex::encode([0u8; 32]),
     });
 
-    let wood_output = ObjectOutput {
-        hash: wood_hash,
-        consumed: vec![],
-    };
+    let wood_output: ObjectOutput = wood_proof.public_values.clone().read();
     axe_stdin.write(&wood_output);
 
     let SP1Proof::Compressed(wood_compressed) = wood_proof.proof else {
@@ -187,10 +181,7 @@ fn create_axe_object(
     };
     axe_stdin.write_proof(*wood_compressed, wood_vk.clone().vk);
 
-    let stone_output = ObjectOutput {
-        hash: stone_hash,
-        consumed: vec![],
-    };
+    let stone_output: ObjectOutput = stone_proof.public_values.clone().read();
     axe_stdin.write(&stone_output);
 
     let SP1Proof::Compressed(stone_compressed) = stone_proof.proof else {
