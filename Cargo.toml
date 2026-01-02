@@ -2,10 +2,12 @@
 members = [
     "common",
     "craftlib",
+    "commitlib",
     "programs/pow",
     "programs/wood",
     "programs/stone",
     "programs/axe",
+    "programs/commit",
 ]
 resolver = "2"
 

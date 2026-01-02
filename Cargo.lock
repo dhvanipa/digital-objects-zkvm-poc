@@ -679,6 +679,40 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b63caa9aa9397e2d9480a9b13673856c78d8ac123288526c37d7839f2a86990"
 
 [[package]]
+name = "commit-program"
+version = "1.1.0"
+dependencies = [
+ "axe-program",
+ "bincode",
+ "common",
+ "hex",
+ "serde",
+ "sha2",
+ "sp1-zkvm",
+ "stone-program",
+ "wood-program",
+]
+
+[[package]]
+name = "commitlib"
+version = "0.1.0"
+dependencies = [
+ "bincode",
+ "clap",
+ "commit-program",
+ "common",
+ "dotenv",
+ "hex",
+ "rand 0.8.5",
+ "serde",
+ "serde_json",
+ "sha2",
+ "sp1-build",
+ "sp1-sdk",
+ "tracing",
+]
+
+[[package]]
 name = "common"
 version = "0.1.0"
 dependencies = [

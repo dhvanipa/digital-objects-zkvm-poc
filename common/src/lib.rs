@@ -8,7 +8,7 @@ pub struct Object {
     pub key: String,
     pub inputs: Vec<ObjectHash>,
     pub seed: u32,
-    pub blueprint: String,
+    pub blueprint: String, // TODO: change to enum
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
