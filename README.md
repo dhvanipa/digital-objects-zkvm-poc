@@ -7,6 +7,11 @@ A proof of concept of digital objects inspired by [digital-objects-e2e-poc](http
 - [Rust](https://rustup.rs/)
 - [SP1 zkVM](https://docs.succinct.xyz/docs/sp1/getting-started/install)
 
+## Docs
+
+- [Digital Objects Explained](https://hackmd.io/@dhvanipa/Sk_n-cHVZx)
+- [Digital Objects via zkVM](https://hackmd.io/@dhvanipa/Bk7Fc5r4Wl)
+
 ## Running the Project
 
 0. Create an `.env` from `.env.example` and set the private key to a wallet that has funds on Ethereum Sepolia.
