@@ -9,6 +9,7 @@ pub struct ObjectJson {
     pub hash: ObjectHash,
     pub work: String,
     pub proof: SP1ProofWithPublicValues,
+    pub program_vk: sp1_sdk::SP1VerifyingKey,
 }
 
 impl ObjectJson {

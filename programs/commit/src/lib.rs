@@ -1,4 +1,4 @@
-use common::{ObjectHash, ObjectOutput};
+use common::ObjectHash;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Serialize, Deserialize, Debug)]

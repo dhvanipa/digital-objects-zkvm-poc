@@ -50,7 +50,7 @@ fn create_pow_proof(
     let mut pow_stdin = SP1Stdin::new();
     pow_stdin.write(&PowIn { n_iters, input });
 
-    let mut pow_proof: SP1ProofWithPublicValues = client
+    let pow_proof: SP1ProofWithPublicValues = client
         .prove(pow_pk, &pow_stdin)
         .compressed()
         .run()
@@ -60,7 +60,7 @@ fn create_pow_proof(
         .verify(&pow_proof, pow_vk)
         .expect("pow verify failed");
 
-    let pow_out: PowOut = pow_proof.public_values.read();
+    let pow_out: PowOut = pow_proof.public_values.clone().read();
 
     let SP1Proof::Compressed(compressed_proof) = pow_proof.proof else {
         panic!("expected compressed proof")
@@ -93,7 +93,7 @@ fn create_stone_object(
     };
     stone_stdin.write_proof(*compressed_proof, pow_vk.clone().vk);
 
-    let mut stone_proof: SP1ProofWithPublicValues = client
+    let stone_proof: SP1ProofWithPublicValues = client
         .prove(stone_pk, &stone_stdin)
         .compressed()
         .run()
@@ -103,7 +103,7 @@ fn create_stone_object(
         .verify(&stone_proof, stone_vk)
         .expect("stone verify failed");
 
-    let committed_output: ObjectOutput = stone_proof.public_values.read();
+    let committed_output: ObjectOutput = stone_proof.public_values.clone().read();
     println!("Stone committed hash: {}", committed_output.hash);
 
     ObjectJson {
@@ -111,6 +111,7 @@ fn create_stone_object(
         hash: committed_output.hash,
         work: pow_out.output.clone(),
         proof: stone_proof,
+        program_vk: stone_vk.clone(),
     }
 }
 
@@ -128,7 +129,7 @@ fn create_wood_object(
         work: hex::encode([0u8; 32]),
     });
 
-    let mut wood_proof: SP1ProofWithPublicValues = client
+    let wood_proof: SP1ProofWithPublicValues = client
         .prove(wood_pk, &wood_stdin)
         .compressed()
         .run()
@@ -138,7 +139,7 @@ fn create_wood_object(
         .verify(&wood_proof, wood_vk)
         .expect("wood verify failed");
 
-    let committed_output: ObjectOutput = wood_proof.public_values.read();
+    let committed_output: ObjectOutput = wood_proof.public_values.clone().read();
     println!("Wood committed hash: {}", committed_output.hash);
 
     ObjectJson {
@@ -146,6 +147,7 @@ fn create_wood_object(
         hash: committed_output.hash,
         work: hex::encode([0u8; 32]),
         proof: wood_proof,
+        program_vk: wood_vk.clone(),
     }
 }
 
@@ -189,7 +191,7 @@ fn create_axe_object(
     };
     axe_stdin.write_proof(*stone_compressed, stone_vk.clone().vk);
 
-    let mut axe_proof: SP1ProofWithPublicValues = client
+    let axe_proof: SP1ProofWithPublicValues = client
         .prove(axe_pk, &axe_stdin)
         .compressed()
         .run()
@@ -199,7 +201,7 @@ fn create_axe_object(
         .verify(&axe_proof, axe_vk)
         .expect("axe verify failed");
 
-    let committed_output: ObjectOutput = axe_proof.public_values.read();
+    let committed_output: ObjectOutput = axe_proof.public_values.clone().read();
     println!("Axe committed hash: {}", committed_output.hash);
 
     ObjectJson {
@@ -207,6 +209,7 @@ fn create_axe_object(
         hash: committed_output.hash,
         work: hex::encode([0u8; 32]),
         proof: axe_proof,
+        program_vk: axe_vk.clone(),
     }
 }
 

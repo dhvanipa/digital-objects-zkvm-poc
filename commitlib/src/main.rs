@@ -39,8 +39,7 @@ fn commit_objects(
         let SP1Proof::Compressed(obj_compressed) = obj_json.proof.proof else {
             panic!("expected compressed proof")
         };
-        let vk = obj_compressed.vk.clone();
-        commit_stdin.write_proof(*obj_compressed, vk);
+        commit_stdin.write_proof(*obj_compressed, obj_json.program_vk.clone().vk);
     }
 
     let mut commit_proof: SP1ProofWithPublicValues = client
