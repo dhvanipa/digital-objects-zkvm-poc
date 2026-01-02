@@ -2,6 +2,7 @@
 members = [
     "craftlib",
     "commitlib",
+    "synchronizer",
     "programs/common",
     "programs/pow",
     "programs/wood",
@@ -12,6 +13,7 @@ members = [
 resolver = "2"
 
 [workspace.dependencies]
+anyhow = "1.0.56"
 dotenvy = "0.15.7"
 sha2 = "0.10.8"
 serde = "1.0.204"
