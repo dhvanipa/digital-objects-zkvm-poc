@@ -223,6 +223,11 @@ impl Node {
             DateTime::<Utc>::from_timestamp_secs(execution_payload.timestamp as i64)
                 .unwrap_or_default(),
         );
+        info!(
+            "current state: created_items={:?}, consumed_items={:?}, ",
+            self.state.read().expect("lock").created_items,
+            self.state.read().expect("lock").consumed_items,
+        );
 
         let has_kzg_blob_commitments = match beacon_block.blob_kzg_commitments {
             Some(commitments) => !commitments.is_empty(),
@@ -347,7 +352,7 @@ impl Node {
         }
 
         info!(
-            "state update: created_items={:?}, consuemd_items={:?}, ",
+            "state update: created_items={:?}, consumed_items={:?}, ",
             state.created_items, state.consumed_items,
         );
         Ok(())
