@@ -1,5 +1,3 @@
-use std::vec;
-
 use ::utils::ObjectJson;
 use commit_program::{CommitIn, CommitOut, ObjectOutputWithType};
 use common::ObjectOutput;
@@ -65,12 +63,6 @@ fn commit_objects(
 async fn main() {
     utils::setup_logger();
 
-    let commitment_blob_data: Vec<u8> = Vec::new();
-
-    send_blob_tx(&commitment_blob_data)
-        .await
-        .expect("failed to send blob transaction");
-
     let client = ProverClient::from_env();
 
     println!("Setting up proving/verifying keys...");
@@ -97,9 +89,15 @@ async fn main() {
         }
     }
 
-    let (committed_output, _commit_proof) =
-        commit_objects(&client, objects, &commit_pk, &commit_vk);
+    let (committed_output, commit_proof) = commit_objects(&client, objects, &commit_pk, &commit_vk);
     println!("Committed output: {:?}", committed_output);
+
+    let commitment_blob_data: Vec<u8> =
+        bincode::serialize(&commit_proof).expect("failed to serialize commit proof");
+
+    send_blob_tx(&commitment_blob_data)
+        .await
+        .expect("failed to send blob transaction");
 
     println!("\n✓ All objects committed successfully!");
 }
