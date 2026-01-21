@@ -1,29 +1,23 @@
+use risc0_zkvm::{default_prover, ExecutorEnv, Receipt};
+
 use ::utils::{save_proof_as_json, ObjectJson};
 use commit_program::{CommitIn, CommitOut, ObjectOutputWithType};
 use common::ObjectOutput;
 use sha2::{Digest, Sha256};
-use sp1_sdk::{
-    include_elf, utils, EnvProver, HashableKey, ProverClient, SP1Proof, SP1ProofWithPublicValues,
-    SP1Stdin,
-};
 
 use crate::eth::send_blob_tx;
 
-const COMMIT_ELF: &[u8] = include_elf!("commit-program");
+use commit::{COMMIT_PROGRAM_ELF, COMMIT_PROGRAM_ID};
 
 mod eth;
 
 fn commit_objects(
-    client: &EnvProver,
+    prover: &impl risc0_zkvm::Prover,
     object_jsons: Vec<ObjectJson>,
-    commit_pk: &sp1_sdk::SP1ProvingKey,
-    commit_vk: &sp1_sdk::SP1VerifyingKey,
-) -> (CommitOut, SP1ProofWithPublicValues) {
-    let mut commit_stdin = SP1Stdin::new();
-
+) -> (CommitOut, Receipt) {
     let mut objects: Vec<ObjectOutputWithType> = Vec::new();
     for obj_json in &object_jsons {
-        let object_output: ObjectOutput = obj_json.proof.public_values.clone().read();
+        let object_output: ObjectOutput = obj_json.proof.journal.decode().unwrap();
 
         objects.push(ObjectOutputWithType {
             hash: object_output.hash.clone(),
@@ -33,44 +27,43 @@ fn commit_objects(
     }
 
     let commit_input = CommitIn { objects: objects };
-    commit_stdin.write(&commit_input);
+    let mut env_builder = ExecutorEnv::builder();
+    let env_builder = env_builder.write(&commit_input).unwrap();
 
-    for obj_json in object_jsons {
-        let object_output: ObjectOutput = obj_json.proof.public_values.clone().read();
-        commit_stdin.write(&object_output);
+    let env_builder = object_jsons
+        .into_iter()
+        .fold(env_builder, |builder, obj_json| {
+            let object_output: ObjectOutput = obj_json.proof.journal.decode().unwrap();
+            builder
+                .add_assumption(obj_json.proof.clone())
+                .write(&object_output)
+                .unwrap()
+        });
 
-        let SP1Proof::Compressed(obj_compressed) = obj_json.proof.proof else {
-            panic!("expected compressed proof")
-        };
-        commit_stdin.write_proof(*obj_compressed, obj_json.program_vk.clone().vk);
-    }
+    let env = env_builder.build().unwrap();
 
-    let mut commit_proof: SP1ProofWithPublicValues = client
-        .prove(commit_pk, &commit_stdin)
-        .compressed()
-        .run()
-        .expect("commit proving failed");
+    let commit_proof = prover.prove(env, COMMIT_PROGRAM_ELF).unwrap();
 
-    client
-        .verify(&commit_proof, commit_vk)
-        .expect("commit verify failed");
+    commit_proof.receipt.verify(COMMIT_PROGRAM_ID).unwrap();
 
-    let committed_output: CommitOut = commit_proof.public_values.read();
+    let committed_output: CommitOut = commit_proof.receipt.journal.decode().unwrap();
 
-    (committed_output, commit_proof)
+    (committed_output, commit_proof.receipt)
 }
 
 #[tokio::main]
 async fn main() {
-    utils::setup_logger();
+    // Initialize tracing. In order to view logs, run `RUST_LOG=info cargo run`
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::filter::EnvFilter::from_default_env())
+        .init();
 
-    let client = ProverClient::from_env();
+    // Obtain the default prover.
+    let prover = default_prover();
 
     std::fs::create_dir_all("commitments").expect("failed to create commitments directory");
 
-    println!("Setting up proving/verifying keys...");
-    let (commit_pk, commit_vk) = client.setup(COMMIT_ELF);
-    println!("commit program vk {}", hex::encode(commit_vk.hash_bytes()));
+    println!("commit program id {:?}", COMMIT_PROGRAM_ID);
 
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 2 {
@@ -92,13 +85,14 @@ async fn main() {
         }
     }
 
-    let (committed_output, commit_proof) = commit_objects(&client, objects, &commit_pk, &commit_vk);
+    let (committed_output, commit_proof) = commit_objects(&prover, objects);
     println!("Committed output: {:?}", committed_output);
 
     let commit_proof_hash: [u8; 32] = Sha256::digest(
         &bincode::serialize(&commit_proof).expect("Failed to serialize commit proof"),
     )
     .into();
+    println!("Commit proof hash: {}", hex::encode(commit_proof_hash));
 
     save_proof_as_json(
         &commit_proof,

@@ -1,6 +1,5 @@
 use std::{sync::Arc, time::Duration};
 
-use sp1_sdk::utils;
 use synchronizer::clients::beacon::types::BlockId;
 
 use anyhow::Result;
@@ -11,7 +10,10 @@ use node::Node;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    utils::setup_logger();
+    // Initialize tracing. In order to view logs, run `RUST_LOG=info cargo run`
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::filter::EnvFilter::from_default_env())
+        .init();
 
     let node = Arc::new(Node::new().await?);
 

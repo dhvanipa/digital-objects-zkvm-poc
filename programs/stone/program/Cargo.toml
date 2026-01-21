@@ -1,0 +1,14 @@
+[package]
+name = "stone-program"
+version = "1.1.0"
+edition = "2021"
+
+[dependencies]
+risc0-zkvm = { version = "^3.0.4", default-features = false, features = ['std'] }
+sha2 = { workspace = true }
+serde = { workspace = true }
+bincode = { workspace = true }
+hex = { workspace = true }
+common = { path = "../../common" }
+pow = { path = "../../pow" }
+pow-program = { path = "../../pow/program" }

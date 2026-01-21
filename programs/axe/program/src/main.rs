@@ -1,27 +1,26 @@
 //! A simple program that crafts an object
 
-// These two lines are necessary for the program to properly compile.
-//
-// Under the hood, we wrap your main function with some extra code so that it behaves properly
-// inside the zkVM.
-#![no_main]
+use risc0_zkvm::{guest::env, serde};
 
 use axe_program::constants;
-use common::{difficulty, hex_to_vk_digest, ObjectInput, ObjectOutput};
-use sha2::{Digest, Sha256};
+use common::{difficulty, ObjectInput, ObjectOutput};
 
-sp1_zkvm::entrypoint!(main);
+// TODO: figure out why these imports aren't the latest ones
+// use stone::STONE_PROGRAM_ID;
+// use wood::WOOD_PROGRAM_ID;
+const WOOD_PROGRAM_ID: [u32; 8] = [
+    4051687538, 1391007321, 3957527642, 3411415860, 3924906641, 3128546228, 3897880847, 1969275840,
+];
+const STONE_PROGRAM_ID: [u32; 8] = [
+    1209310465, 973615066, 2006126405, 3155197817, 658800578, 1149895044, 2927651235, 2778763347,
+];
 
-// TODO: find a way to auto-generate and share these constants, also store without having to decode
-const WOOD_VKEY_HASH: &str = "1dc5f3be73dbe87875287d81592e666159cd2bb91b9a30a54e4c70c570523f45";
-const STONE_VKEY_HASH: &str = "5d0865c4708a2df7685dee2f0c98e52d32674eee126a276c127276bd6e3d7ad2";
-
-pub fn main() {
+fn main() {
     // Read an input to the program.
     //
     // Behind the scenes, this compiles down to a system call which handles reading inputs
     // from the prover.
-    let object_inp = sp1_zkvm::io::read::<ObjectInput>();
+    let object_inp = env::read::<ObjectInput>();
 
     assert!(object_inp.object.inputs.len() == 2, "Must have 2 inputs");
     assert!(
@@ -41,23 +40,16 @@ pub fn main() {
     );
 
     // TODO: factor out common code for verifying objects
-    let wood_input = sp1_zkvm::io::read::<ObjectOutput>();
-    let wood_input_digest: [u8; 32] =
-        Sha256::digest(&bincode::serialize(&wood_input).unwrap()).into();
-    sp1_zkvm::lib::verify::verify_sp1_proof(&hex_to_vk_digest(WOOD_VKEY_HASH), &wood_input_digest);
+    let wood_input = env::read::<ObjectOutput>();
+    env::verify(WOOD_PROGRAM_ID, &serde::to_vec(&wood_input).unwrap()).unwrap();
     // TODO: make this so the inputs can be in any order
     assert!(
         wood_input.hash == object_inp.object.inputs[0],
         "Missing wood input"
     );
 
-    let stone_input = sp1_zkvm::io::read::<ObjectOutput>();
-    let stone_input_digest: [u8; 32] =
-        Sha256::digest(&bincode::serialize(&stone_input).unwrap()).into();
-    sp1_zkvm::lib::verify::verify_sp1_proof(
-        &hex_to_vk_digest(STONE_VKEY_HASH),
-        &stone_input_digest,
-    );
+    let stone_input = env::read::<ObjectOutput>();
+    env::verify(STONE_PROGRAM_ID, &serde::to_vec(&stone_input).unwrap()).unwrap();
     assert!(
         stone_input.hash == object_inp.object.inputs[1],
         "Missing stone input"
@@ -67,7 +59,7 @@ pub fn main() {
     //
     // Behind the scenes, this also compiles down to a system call which handles writing
     // outputs to the prover.
-    sp1_zkvm::io::commit(&ObjectOutput {
+    env::commit(&ObjectOutput {
         hash: object_hash,
         consumed: object_inp.object.inputs,
     });
