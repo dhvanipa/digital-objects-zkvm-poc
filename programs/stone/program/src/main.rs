@@ -6,7 +6,11 @@ use common::{difficulty, ObjectInput, ObjectOutput};
 
 mod constants;
 
-use pow::POW_PROGRAM_ID;
+// TODO: figure out why these imports aren't the latest ones
+// use pow::POW_PROGRAM_ID;
+const POW_PROGRAM_ID: [u32; 8] = [
+    1649781456, 1167951597, 353527003, 4019636127, 1570962558, 3626274108, 367129753, 1095461449,
+];
 
 fn main() {
     // Read an input to the program.

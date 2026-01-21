@@ -5,8 +5,15 @@ use risc0_zkvm::{guest::env, serde};
 use axe_program::constants;
 use common::{difficulty, ObjectInput, ObjectOutput};
 
-use stone::STONE_PROGRAM_ID;
-use wood::WOOD_PROGRAM_ID;
+// TODO: figure out why these imports aren't the latest ones
+// use stone::STONE_PROGRAM_ID;
+// use wood::WOOD_PROGRAM_ID;
+const WOOD_PROGRAM_ID: [u32; 8] = [
+    4051687538, 1391007321, 3957527642, 3411415860, 3924906641, 3128546228, 3897880847, 1969275840,
+];
+const STONE_PROGRAM_ID: [u32; 8] = [
+    1209310465, 973615066, 2006126405, 3155197817, 658800578, 1149895044, 2927651235, 2778763347,
+];
 
 fn main() {
     // Read an input to the program.

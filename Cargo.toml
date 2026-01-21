@@ -8,6 +8,10 @@ members = [
     "programs/wood/program",
     "programs/stone",
     "programs/stone/program",
+    "programs/axe",
+    "programs/axe/program",
+    "programs/commit",
+    "programs/commit/program",
 ]
 resolver = "2"
 
