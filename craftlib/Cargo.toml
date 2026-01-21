@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-risc0-zkvm = { version = "^3.0.4" }
+risc0-zkvm = { workspace = true }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 serde = { version = "1.0.200", default-features = false, features = ["derive"] }
 clap = { version = "4.0", features = ["derive", "env"] }

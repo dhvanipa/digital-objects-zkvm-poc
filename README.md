@@ -5,7 +5,7 @@ A proof of concept of digital objects inspired by [digital-objects-e2e-poc](http
 ## Requirements
 
 - [Rust](https://rustup.rs/)
-- [SP1 zkVM](https://docs.succinct.xyz/docs/sp1/getting-started/install)
+- [RISC Zero zkVM](https://dev.risczero.com/api/zkvm/install)
 
 ## Docs
 

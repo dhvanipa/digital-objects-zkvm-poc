@@ -92,6 +92,7 @@ async fn main() {
         &bincode::serialize(&commit_proof).expect("Failed to serialize commit proof"),
     )
     .into();
+    println!("Commit proof hash: {}", hex::encode(commit_proof_hash));
 
     save_proof_as_json(
         &commit_proof,
