@@ -1,0 +1,18 @@
+[package]
+name = "commit-program"
+version = "1.1.0"
+edition = "2021"
+
+[dependencies]
+risc0-zkvm = { version = "^3.0.4", default-features = false, features = ['std'] }
+sha2 = { workspace = true }
+serde = { workspace = true }
+hex = { workspace = true }
+bincode = { workspace = true }
+common = { path = "../../common" }
+wood = { path = "../../wood" }
+wood-program = { path = "../../wood/program" }
+stone = { path = "../../stone" }
+stone-program = { path = "../../stone/program" }
+axe = { path = "../../axe" }
+axe-program = { path = "../../axe/program" }

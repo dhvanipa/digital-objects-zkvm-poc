@@ -2,7 +2,7 @@
 
 use risc0_zkvm::{guest::env, serde};
 
-use common::{difficulty, hex_to_vk_digest, ObjectInput, ObjectOutput};
+use common::{difficulty, ObjectInput, ObjectOutput};
 
 mod constants;
 

@@ -327,6 +327,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ace50bade8e6234aa140d9a2f552bbee1db4d353f69b8217bc503490fc1a9f26"
 
 [[package]]
+name = "axe"
+version = "0.1.0"
+dependencies = [
+ "risc0-build",
+]
+
+[[package]]
+name = "axe-program"
+version = "1.1.0"
+dependencies = [
+ "bincode",
+ "common",
+ "hex",
+ "risc0-zkvm",
+ "serde",
+ "sha2",
+ "stone",
+ "wood",
+]
+
+[[package]]
 name = "base64"
 version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -642,6 +663,8 @@ dependencies = [
 name = "craftlib"
 version = "0.1.0"
 dependencies = [
+ "axe",
+ "axe-program",
  "bincode",
  "clap",
  "common",

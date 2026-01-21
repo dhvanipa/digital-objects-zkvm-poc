@@ -22,3 +22,5 @@ wood = { path = "../programs/wood" }
 wood-program = { path = "../programs/wood/program" }
 stone = { path = "../programs/stone" }
 stone-program = { path = "../programs/stone/program" }
+axe = { path = "../programs/axe" }
+axe-program = { path = "../programs/axe/program" }
