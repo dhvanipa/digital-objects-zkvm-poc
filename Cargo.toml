@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "craftlib",
+    "commitlib",
     "programs/common",
     "programs/pow",
     "programs/pow/program",
