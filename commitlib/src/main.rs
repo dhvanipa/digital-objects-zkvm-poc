@@ -1,4 +1,4 @@
-use risc0_zkvm::{default_prover, ExecutorEnv, ProveInfo, Receipt};
+use risc0_zkvm::{default_prover, ExecutorEnv, Receipt};
 
 use ::utils::{save_proof_as_json, ObjectJson};
 use commit_program::{CommitIn, CommitOut, ObjectOutputWithType};

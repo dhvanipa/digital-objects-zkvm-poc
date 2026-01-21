@@ -44,10 +44,9 @@ pub async fn send_blob_tx(blob_data: &[u8]) -> Result<TxHash, Box<dyn std::error
     let envelope = provider.fill(tx).await?.try_into_envelope()?;
 
     // Convert the envelope into an EIP-7594 transaction by converting the sidecar.
-    let tx: EthereumTxEnvelope<TxEip4844WithSidecar<BlobTransactionSidecarEip7594>> =
-        envelope.try_into_pooled()?.try_map_eip4844(|tx| {
-            tx.try_map_sidecar(|sidecar| sidecar.try_into_7594(EnvKzgSettings::Default.get()))
-        })?;
+    let tx: EthereumTxEnvelope<TxEip4844WithSidecar<BlobTransactionSidecarEip7594>> = envelope
+        .try_into_pooled()?
+        .try_map_eip4844(|tx| tx.try_map_sidecar(|sidecar| sidecar.try_into_eip7594()))?;
     println!("Sending transaction... {}", tx.hash());
 
     let encoded_tx = tx.encoded_2718();

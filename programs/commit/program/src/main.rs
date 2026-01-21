@@ -5,7 +5,6 @@ use risc0_zkvm::{guest::env, serde};
 use axe_program::constants::AXE_BLUEPRINT;
 use commit_program::{CommitIn, CommitOut};
 use common::{ObjectHash, ObjectOutput};
-use sha2::{Digest, Sha256};
 use stone_program::constants::STONE_BLUEPRINT;
 use wood_program::constants::WOOD_BLUEPRINT;
 

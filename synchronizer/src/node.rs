@@ -1,8 +1,7 @@
 use std::{
     collections::{HashMap, HashSet},
     fs::{create_dir_all, read_dir, rename, File},
-    io,
-    io::{Read, Write},
+    io::{self, Read, Write},
     path::PathBuf,
     str::FromStr,
     sync::RwLock,
@@ -11,7 +10,6 @@ use std::{
 
 use commit_program::CommitOut;
 use common::ObjectHash;
-use sp1_sdk::{include_elf, EnvProver, HashableKey, ProverClient};
 use synchronizer::{
     bytes_from_simple_blob,
     clients::beacon::{
@@ -44,25 +42,17 @@ pub struct State {
 }
 
 pub struct Node {
-    spclient: EnvProver,
-    commit_vk: sp1_sdk::SP1VerifyingKey,
     pub beacon_cli: BeaconClient,
     pub rpc_cli: RootProvider,
     // Mutable state
     state: RwLock<State>,
 }
 
-const COMMIT_ELF: &[u8] = include_elf!("commit-program");
+use commit::COMMIT_PROGRAM_ID;
 
 // This node code is adapted from https://github.com/0xPARC/digital-objects-e2e-poc/blob/main/synchronizer/src/main.rs
 impl Node {
     pub async fn new() -> Result<Self> {
-        let spclient = ProverClient::from_env();
-
-        println!("Setting up proving/verifying keys...");
-        let (_commit_pk, commit_vk) = spclient.setup(COMMIT_ELF);
-        println!("commit program vk {}", hex::encode(commit_vk.hash_bytes()));
-
         let http_cli = reqwest::Client::builder()
             .timeout(Duration::from_secs(8))
             .build()?;
@@ -82,8 +72,6 @@ impl Node {
             consumed_objects: HashSet::new(),
         };
         Ok(Self {
-            spclient,
-            commit_vk,
             beacon_cli,
             rpc_cli,
             state: RwLock::new(state),
@@ -322,10 +310,8 @@ impl Node {
         let commit_proof =
             load_proof_from_json_file(&format!("commitments/{}.json", commit_proof_hash))
                 .expect("Expect commitment file to exist");
-        self.spclient
-            .verify(&commit_proof, &self.commit_vk)
-            .expect("commit verify failed");
-        let commit_out: CommitOut = commit_proof.public_values.clone().read();
+        commit_proof.verify(COMMIT_PROGRAM_ID).unwrap();
+        let commit_out: CommitOut = commit_proof.journal.decode().unwrap();
         let mut state = self.state.write().expect("lock");
 
         // Check that output is unique

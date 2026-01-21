@@ -2,6 +2,7 @@
 members = [
     "craftlib",
     "commitlib",
+    "synchronizer",
     "programs/common",
     "programs/pow",
     "programs/pow/program",
@@ -23,7 +24,6 @@ sha2 = "0.10.8"
 serde = "1.0.204"
 bincode = "1.3.3"
 hex = "0.4.3"
-sp1-sdk = "5.0.8"
 alloy = { version = "1.2.1", features = [
     "eips",
     "full",
@@ -34,4 +34,4 @@ alloy = { version = "1.2.1", features = [
     "rpc-client",
     "rpc-types-beacon"
 ] }
-tokio = "1.48.0"
+tokio = { version = "1.48.0", features = ["rt-multi-thread"] }
