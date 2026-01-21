@@ -68,7 +68,9 @@ fn create_stone_object(prover: &impl risc0_zkvm::Prover, prover_opts: &ProverOpt
     let (obj, obj_hash) = mine_object(STONE_BLUEPRINT, STONE_MINING_MAX, vec![]);
     println!("Mined stone: seed={}, hash={}", obj.seed, obj_hash);
 
+    println!("Creating POW proof for stone...");
     let (pow_out, pow_proof) = create_pow_proof(prover, &prover_opts, 3, obj_hash);
+    println!("Completed POW proof for stone, {}.", pow_out.output.clone());
 
     let input = &ObjectInput {
         object: obj.clone(),
@@ -204,7 +206,7 @@ fn main() {
 
     // Obtain the default prover.
     let prover = default_prover();
-    let prover_opts = ProverOpts::composite();
+    let prover_opts = ProverOpts::succinct();
 
     println!("pow program id {:?}", POW_PROGRAM_ID);
     println!("wood program id {:?}", WOOD_PROGRAM_ID);

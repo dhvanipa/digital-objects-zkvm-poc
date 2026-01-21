@@ -1,4 +1,4 @@
-use risc0_zkvm::{default_prover, ExecutorEnv, Receipt};
+use risc0_zkvm::{default_prover, ExecutorEnv, ProverOpts, Receipt};
 
 use ::utils::{save_proof_as_json, ObjectJson};
 use commit_program::{CommitIn, CommitOut, ObjectOutputWithType};
@@ -13,6 +13,7 @@ mod eth;
 
 fn commit_objects(
     prover: &impl risc0_zkvm::Prover,
+    prover_opts: &ProverOpts,
     object_jsons: Vec<ObjectJson>,
 ) -> (CommitOut, Receipt) {
     let mut objects: Vec<ObjectOutputWithType> = Vec::new();
@@ -42,7 +43,12 @@ fn commit_objects(
 
     let env = env_builder.build().unwrap();
 
-    let commit_proof = prover.prove(env, COMMIT_PROGRAM_ELF).unwrap();
+    let start = std::time::Instant::now();
+    let commit_proof = prover
+        .prove_with_opts(env, COMMIT_PROGRAM_ELF, prover_opts)
+        .unwrap();
+    let duration = start.elapsed();
+    println!("\nTotal commit proof creation time: {:?}", duration);
 
     commit_proof.receipt.verify(COMMIT_PROGRAM_ID).unwrap();
 
@@ -60,6 +66,7 @@ async fn main() {
 
     // Obtain the default prover.
     let prover = default_prover();
+    let prover_opts = ProverOpts::groth16();
 
     std::fs::create_dir_all("commitments").expect("failed to create commitments directory");
 
@@ -85,7 +92,7 @@ async fn main() {
         }
     }
 
-    let (committed_output, commit_proof) = commit_objects(&prover, objects);
+    let (committed_output, commit_proof) = commit_objects(&prover, &prover_opts, objects);
     println!("Committed output: {:?}", committed_output);
 
     let commit_proof_hash: [u8; 32] = Sha256::digest(
