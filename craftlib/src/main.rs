@@ -127,15 +127,13 @@ fn create_wood_object(prover: &impl risc0_zkvm::Prover) -> ObjectJson {
 
 fn create_axe_object(
     prover: &impl risc0_zkvm::Prover,
-    wood_hash: String,
-    wood_proof: Receipt,
-    stone_hash: String,
-    stone_proof: Receipt,
+    wood_object: ObjectJson,
+    stone_object: ObjectJson,
 ) -> ObjectJson {
     let (obj, obj_hash) = mine_object(
         AXE_BLUEPRINT,
         AXE_MINING_MAX,
-        vec![wood_hash.clone(), stone_hash.clone()],
+        vec![wood_object.hash.clone(), stone_object.hash.clone()],
     );
     println!("Created axe: seed={}, hash={}", obj.seed, obj_hash);
 
@@ -144,16 +142,16 @@ fn create_axe_object(
         work: hex::encode([0u8; 32]),
     };
 
-    let wood_output: ObjectOutput = wood_proof.journal.decode().unwrap();
-    let stone_output: ObjectOutput = stone_proof.journal.decode().unwrap();
+    let wood_output: ObjectOutput = wood_object.proof.journal.decode().unwrap();
+    let stone_output: ObjectOutput = stone_object.proof.journal.decode().unwrap();
 
     let env = ExecutorEnv::builder()
         .write(&input)
         .unwrap()
-        .add_assumption(wood_proof.clone())
+        .add_assumption(wood_object.proof.clone())
         .write(&wood_output)
         .unwrap()
-        .add_assumption(stone_proof.clone())
+        .add_assumption(stone_object.proof.clone())
         .write(&stone_output)
         .unwrap()
         .build()
@@ -218,13 +216,7 @@ fn main() {
         let wood_object = wood_objects.pop().expect("need wood for axe");
         let stone_object = stone_objects.pop().expect("need stone for axe");
 
-        let object = create_axe_object(
-            &prover,
-            wood_object.hash,
-            wood_object.proof,
-            stone_object.hash,
-            stone_object.proof,
-        );
+        let object = create_axe_object(&prover, wood_object, stone_object);
         let filename = format!("objects/axe_{}.json", i);
         object.save_as_json(&filename).expect("failed to save axe");
         println!("Saved to {}", filename);
