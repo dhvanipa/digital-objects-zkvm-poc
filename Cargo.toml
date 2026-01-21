@@ -1,14 +1,13 @@
 [workspace]
 members = [
     "craftlib",
-    "commitlib",
-    "synchronizer",
     "programs/common",
     "programs/pow",
+    "programs/pow/program",
     "programs/wood",
+    "programs/wood/program",
     "programs/stone",
-    "programs/axe",
-    "programs/commit",
+    "programs/stone/program",
 ]
 resolver = "2"
 

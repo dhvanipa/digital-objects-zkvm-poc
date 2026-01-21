@@ -4,7 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-sp1-sdk = { workspace = true }
+risc0-zkvm = { version = "^3.0.4" }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 serde = { version = "1.0.200", default-features = false, features = ["derive"] }
 clap = { version = "4.0", features = ["derive", "env"] }
 tracing = "0.1.40"
@@ -15,10 +16,9 @@ rand = "0.8"
 bincode = { workspace = true }
 utils = { path = "../utils" }
 common = { path = "../programs/common" }
-pow-program = { path = "../programs/pow" }
-wood-program = { path = "../programs/wood" }
-stone-program = { path = "../programs/stone" }
-axe-program = { path = "../programs/axe" }
-
-[build-dependencies]
-sp1-build = "5.0.8"
+pow = { path = "../programs/pow" }
+pow-program = { path = "../programs/pow/program" }
+wood = { path = "../programs/wood" }
+wood-program = { path = "../programs/wood/program" }
+stone = { path = "../programs/stone" }
+stone-program = { path = "../programs/stone/program" }

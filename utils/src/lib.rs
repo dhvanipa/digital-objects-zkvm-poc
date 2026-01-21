@@ -1,6 +1,6 @@
 use common::{Object, ObjectHash};
+use risc0_zkvm::Receipt;
 use serde::{Deserialize, Serialize};
-use sp1_sdk::SP1ProofWithPublicValues;
 use std::{fs::File, io::Write, path::Path};
 
 #[derive(Serialize, Deserialize)]
@@ -8,8 +8,8 @@ pub struct ObjectJson {
     pub object: Object,
     pub hash: ObjectHash,
     pub work: String,
-    pub proof: SP1ProofWithPublicValues,
-    pub program_vk: sp1_sdk::SP1VerifyingKey,
+    pub proof: Receipt,
+    pub program_vk: [u32; 8],
 }
 
 impl ObjectJson {
@@ -28,7 +28,7 @@ impl ObjectJson {
 }
 
 pub fn save_proof_as_json(
-    proof: &SP1ProofWithPublicValues,
+    proof: &Receipt,
     path: impl AsRef<Path>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let json = serde_json::to_string_pretty(&proof)?;
@@ -39,8 +39,8 @@ pub fn save_proof_as_json(
 
 pub fn load_proof_from_json_file(
     path: impl AsRef<Path>,
-) -> Result<SP1ProofWithPublicValues, Box<dyn std::error::Error>> {
+) -> Result<Receipt, Box<dyn std::error::Error>> {
     let file = File::open(path.as_ref())?;
-    let proof: SP1ProofWithPublicValues = serde_json::from_reader(file)?;
+    let proof: Receipt = serde_json::from_reader(file)?;
     Ok(proof)
 }
