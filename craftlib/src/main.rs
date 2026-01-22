@@ -128,6 +128,13 @@ fn create_wood_object(prover: &impl risc0_zkvm::Prover, prover_opts: &ProverOpts
     let duration = start.elapsed();
     println!("Wood proving time: {:?}", duration);
 
+    // let start = std::time::Instant::now();
+    // let groth16_receipt = prover
+    //     .compress(&ProverOpts::groth16(), &wood_proof.receipt)
+    //     .unwrap();
+    // let duration = start.elapsed();
+    // println!("Wood proof compression time: {:?}", duration);
+
     wood_proof.receipt.verify(WOOD_PROGRAM_ID).unwrap();
 
     let committed_output: ObjectOutput = wood_proof.receipt.journal.decode().unwrap();
