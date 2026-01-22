@@ -45,11 +45,14 @@ fn commit_objects(
         commit_stdin.write_proof(*obj_compressed, obj_json.program_vk.clone().vk);
     }
 
+    let start = std::time::Instant::now();
     let mut commit_proof: SP1ProofWithPublicValues = client
         .prove(commit_pk, &commit_stdin)
-        .compressed()
+        .groth16()
         .run()
         .expect("commit proving failed");
+    let duration = start.elapsed();
+    println!("\nTotal commit proof creation time: {:?}", duration);
 
     client
         .verify(&commit_proof, commit_vk)
@@ -99,6 +102,7 @@ async fn main() {
         &bincode::serialize(&commit_proof).expect("Failed to serialize commit proof"),
     )
     .into();
+    println!("Commit proof hash: {}", hex::encode(commit_proof_hash));
 
     save_proof_as_json(
         &commit_proof,

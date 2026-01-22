@@ -79,7 +79,9 @@ fn create_stone_object(
     let (obj, obj_hash) = mine_object(STONE_BLUEPRINT, STONE_MINING_MAX, vec![]);
     println!("Mined stone: seed={}, hash={}", obj.seed, obj_hash);
 
+    println!("Creating POW proof for stone...");
     let (pow_out, pow_proof) = create_pow_proof(client, pow_pk, pow_vk, 3, obj_hash);
+    println!("Completed POW proof for stone, {}.", pow_out.output.clone());
 
     let mut stone_stdin = SP1Stdin::new();
     stone_stdin.write(&ObjectInput {
@@ -93,11 +95,14 @@ fn create_stone_object(
     };
     stone_stdin.write_proof(*compressed_proof, pow_vk.clone().vk);
 
+    let start = std::time::Instant::now();
     let stone_proof: SP1ProofWithPublicValues = client
         .prove(stone_pk, &stone_stdin)
         .compressed()
         .run()
         .expect("stone proving failed");
+    let duration = start.elapsed();
+    println!("Stone proving time: {:?}", duration);
 
     client
         .verify(&stone_proof, stone_vk)
@@ -129,11 +134,14 @@ fn create_wood_object(
         work: hex::encode([0u8; 32]),
     });
 
+    let start = std::time::Instant::now();
     let wood_proof: SP1ProofWithPublicValues = client
         .prove(wood_pk, &wood_stdin)
         .compressed()
         .run()
         .expect("wood proving failed");
+    let duration = start.elapsed();
+    println!("Wood proving time: {:?}", duration);
 
     client
         .verify(&wood_proof, wood_vk)
@@ -191,11 +199,14 @@ fn create_axe_object(
     };
     axe_stdin.write_proof(*stone_compressed, stone_vk.clone().vk);
 
+    let start = std::time::Instant::now();
     let axe_proof: SP1ProofWithPublicValues = client
         .prove(axe_pk, &axe_stdin)
         .compressed()
         .run()
         .expect("axe proving failed");
+    let duration = start.elapsed();
+    println!("Axe proving time: {:?}", duration);
 
     client
         .verify(&axe_proof, axe_vk)
