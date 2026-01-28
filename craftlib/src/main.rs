@@ -1,3 +1,4 @@
+use core::num;
 use std::vec;
 
 use risc0_zkvm::{default_prover, ExecutorEnv, ProveInfo, ProverOpts};
@@ -220,42 +221,57 @@ fn main() {
     println!("stone program id {:?}", STONE_PROGRAM_ID);
     println!("axe program id {:?}", AXE_PROGRAM_ID);
 
-    let mut wood_objects = Vec::new();
-    let mut stone_objects = Vec::new();
+    // let mut stone_objects = Vec::new();
+    let num_wood: i32 = 100;
+    let mut wood_craft_times = Vec::new();
 
-    let start = std::time::Instant::now();
-    println!("\n=== Creating Wood ===",);
-    let object = create_wood_object(&prover, &prover_opts);
-    let filename = format!("objects/wood_1.json");
-    object.save_as_json(&filename).expect("failed to save wood");
-    println!("Saved to {}", filename);
-    wood_objects.push(object);
-    let duration = start.elapsed();
-    println!("\nTotal wood creation time: {:?}", duration);
+    for i in 0..num_wood {
+        let filename = format!("objects/wood_{}.json", i + 1);
+        // if file exists, skip
+        if std::path::Path::new(&filename).exists() {
+            println!("{} already exists, skipping", filename);
+            continue;
+        }
 
-    let start = std::time::Instant::now();
-    println!("\n=== Creating Stone ===");
-    let object = create_stone_object(&prover, &prover_opts);
-    let filename = format!("objects/stone_1.json");
-    object
-        .save_as_json(&filename)
-        .expect("failed to save stone");
-    println!("Saved to {}", filename);
-    stone_objects.push(object);
-    let duration = start.elapsed();
-    println!("\nTotal stone creation time: {:?}", duration);
+        let start = std::time::Instant::now();
+        println!("\n=== Creating Wood ===",);
+        let object = create_wood_object(&prover, &prover_opts);
+        object.save_as_json(&filename).expect("failed to save wood");
+        println!("Saved to {}", filename);
+        let duration = start.elapsed();
+        println!("\nTotal wood creation time: {:?}", duration);
+        wood_craft_times.push(duration.as_secs_f64());
+    }
+    let total_wood_time: f64 = wood_craft_times.iter().sum();
+    let avg_wood_time: f64 = total_wood_time / (num_wood as f64);
+    println!(
+        "\n✓ All wood objects created successfully! Average wood creation time: {:.2} seconds",
+        avg_wood_time
+    );
 
-    let start = std::time::Instant::now();
-    println!("\n=== Creating Axe===");
-    let wood_object = wood_objects.pop().expect("need wood for axe");
-    let stone_object = stone_objects.pop().expect("need stone for axe");
+    // let start = std::time::Instant::now();
+    // println!("\n=== Creating Stone ===");
+    // let object = create_stone_object(&prover, &prover_opts);
+    // let filename = format!("objects/stone_1.json");
+    // object
+    //     .save_as_json(&filename)
+    //     .expect("failed to save stone");
+    // println!("Saved to {}", filename);
+    // stone_objects.push(object);
+    // let duration = start.elapsed();
+    // println!("\nTotal stone creation time: {:?}", duration);
 
-    let object = create_axe_object(&prover, &prover_opts, wood_object, stone_object);
-    let filename = format!("objects/axe_1.json");
-    object.save_as_json(&filename).expect("failed to save axe");
-    println!("Saved to {}", filename);
-    let duration = start.elapsed();
-    println!("\nTotal axe creation time: {:?}", duration);
+    // let start = std::time::Instant::now();
+    // println!("\n=== Creating Axe===");
+    // let wood_object = wood_objects.pop().expect("need wood for axe");
+    // let stone_object = stone_objects.pop().expect("need stone for axe");
+
+    // let object = create_axe_object(&prover, &prover_opts, wood_object, stone_object);
+    // let filename = format!("objects/axe_1.json");
+    // object.save_as_json(&filename).expect("failed to save axe");
+    // println!("Saved to {}", filename);
+    // let duration = start.elapsed();
+    // println!("\nTotal axe creation time: {:?}", duration);
 
     println!("\n✓ All objects created successfully!");
 }

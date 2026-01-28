@@ -73,23 +73,40 @@ async fn main() {
     println!("commit program id {:?}", COMMIT_PROGRAM_ID);
 
     let args: Vec<String> = std::env::args().collect();
-    if args.len() < 2 {
-        eprintln!("Usage: {} <object1.json> [object2.json] ...", args[0]);
+    if args.len() != 2 {
+        eprintln!("Usage: {} <objects_folder>", args[0]);
         std::process::exit(1);
     }
 
+    let objects_folder = &args[1];
     let mut objects: Vec<ObjectJson> = Vec::new();
-    for path in &args[1..] {
-        match ObjectJson::from_json_file(path) {
-            Ok(obj_json) => {
-                println!("Loaded object from {}", path);
-                objects.push(obj_json);
-            }
-            Err(e) => {
-                eprintln!("Failed to load {}: {}", path, e);
-                std::process::exit(1);
+
+    let entries = std::fs::read_dir(objects_folder).unwrap_or_else(|e| {
+        eprintln!("Failed to read directory {}: {}", objects_folder, e);
+        std::process::exit(1);
+    });
+
+    for entry in entries {
+        let entry = entry.unwrap();
+        let path = entry.path();
+
+        if path.extension().and_then(|s| s.to_str()) == Some("json") {
+            match ObjectJson::from_json_file(path.to_str().unwrap()) {
+                Ok(obj_json) => {
+                    println!("Loaded object from {}", path.display());
+                    objects.push(obj_json);
+                }
+                Err(e) => {
+                    eprintln!("Failed to load {}: {}", path.display(), e);
+                    std::process::exit(1);
+                }
             }
         }
+    }
+
+    if objects.is_empty() {
+        eprintln!("No JSON files found in {}", objects_folder);
+        std::process::exit(1);
     }
 
     let (committed_output, commit_proof) = commit_objects(&prover, &prover_opts, objects);
