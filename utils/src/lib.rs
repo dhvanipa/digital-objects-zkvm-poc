@@ -20,6 +20,13 @@ impl ObjectJson {
         Ok(())
     }
 
+    pub fn save_as_bytes(&self, path: impl AsRef<Path>) -> Result<(), Box<dyn std::error::Error>> {
+        let bytes = bincode::serialize(&self)?;
+        let mut file = File::create(path.as_ref())?;
+        file.write_all(&bytes)?;
+        Ok(())
+    }
+
     pub fn from_json_file(path: impl AsRef<Path>) -> Result<Self, Box<dyn std::error::Error>> {
         let file = File::open(path.as_ref())?;
         let object_json: ObjectJson = serde_json::from_reader(file)?;

@@ -226,18 +226,24 @@ fn main() {
     let mut wood_craft_times = Vec::new();
 
     for i in 0..num_wood {
-        let filename = format!("objects/wood_{}.json", i + 1);
+        let filename_base = format!("objects/wood_{}", i + 1);
+        let filename_json = format!("{}.json", filename_base);
         // if file exists, skip
-        if std::path::Path::new(&filename).exists() {
-            println!("{} already exists, skipping", filename);
+        if std::path::Path::new(&filename_json).exists() {
+            println!("{} already exists, skipping", filename_json);
             continue;
         }
 
         let start = std::time::Instant::now();
         println!("\n=== Creating Wood ===",);
         let object = create_wood_object(&prover, &prover_opts);
-        object.save_as_json(&filename).expect("failed to save wood");
-        println!("Saved to {}", filename);
+        object
+            .save_as_json(&filename_json)
+            .expect("failed to save wood");
+        object
+            .save_as_bytes(format!("{}.bin", filename_base))
+            .expect("failed to save wood bytes");
+        println!("Saved to {}", filename_json);
         let duration = start.elapsed();
         println!("\nTotal wood creation time: {:?}", duration);
         wood_craft_times.push(duration.as_secs_f64());
