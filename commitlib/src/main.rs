@@ -80,7 +80,7 @@ async fn main() {
 
     let mut objects: Vec<ObjectJson> = Vec::new();
     for path in &args[1..] {
-        match ObjectJson::from_json_file(path) {
+        match ObjectJson::from_bytes(path) {
             Ok(obj_json) => {
                 println!("Loaded object from {}", path);
                 objects.push(obj_json);
@@ -108,12 +108,16 @@ async fn main() {
     .expect("failed to save commit proof");
 
     // Note: We cannot send the full commit proof as blob data due to size limits.
-    // let commitment_blob_data: Vec<u8> =
-    //     bincode::serialize(&commit_proof).expect("failed to serialize commit proof");
+    let commitment_blob_data: Vec<u8> =
+        bincode::serialize(&commit_proof).expect("failed to serialize commit proof");
+    println!(
+        "Size of commitment blob data: {} bytes",
+        commitment_blob_data.len()
+    );
 
-    send_blob_tx(&commit_proof_hash)
-        .await
-        .expect("failed to send blob transaction");
+    // send_blob_tx(&commit_proof_hash)
+    //     .await
+    //     .expect("failed to send blob transaction");
 
     println!("\n✓ All objects committed successfully!");
 }

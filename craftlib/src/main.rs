@@ -226,8 +226,12 @@ fn main() {
     let start = std::time::Instant::now();
     println!("\n=== Creating Wood ===",);
     let object = create_wood_object(&prover, &prover_opts);
-    let filename = format!("objects/wood_1.json");
+    let filename_base = "objects/wood_1".to_string();
+    let filename = format!("{}.json", filename_base);
     object.save_as_json(&filename).expect("failed to save wood");
+    object
+        .save_as_bytes(&format!("{}.bin", filename_base))
+        .expect("failed to save wood");
     println!("Saved to {}", filename);
     wood_objects.push(object);
     let duration = start.elapsed();
@@ -236,9 +240,13 @@ fn main() {
     let start = std::time::Instant::now();
     println!("\n=== Creating Stone ===");
     let object = create_stone_object(&prover, &prover_opts);
-    let filename = format!("objects/stone_1.json");
+    let filename_base = "objects/stone_1".to_string();
+    let filename = format!("{}.json", filename_base);
     object
         .save_as_json(&filename)
+        .expect("failed to save stone");
+    object
+        .save_as_bytes(&format!("{}.bin", filename_base))
         .expect("failed to save stone");
     println!("Saved to {}", filename);
     stone_objects.push(object);
@@ -251,8 +259,12 @@ fn main() {
     let stone_object = stone_objects.pop().expect("need stone for axe");
 
     let object = create_axe_object(&prover, &prover_opts, wood_object, stone_object);
-    let filename = format!("objects/axe_1.json");
+    let filename_base = "objects/axe_1".to_string();
+    let filename = format!("{}.json", filename_base);
     object.save_as_json(&filename).expect("failed to save axe");
+    object
+        .save_as_bytes(&format!("{}.bin", filename_base))
+        .expect("failed to save axe");
     println!("Saved to {}", filename);
     let duration = start.elapsed();
     println!("\nTotal axe creation time: {:?}", duration);

@@ -25,6 +25,22 @@ impl ObjectJson {
         let object_json: ObjectJson = serde_json::from_reader(file)?;
         Ok(object_json)
     }
+
+    pub fn save_as_bytes(&self, path: impl AsRef<Path>) -> Result<(), Box<dyn std::error::Error>> {
+        let bytes = bincode::serialize(&self)?;
+        let mut file = File::create(path.as_ref())?;
+        file.write_all(&bytes)?;
+        Ok(())
+    }
+
+    pub fn from_bytes(path: impl AsRef<Path>) -> Result<Self, Box<dyn std::error::Error>> {
+        let mut file = File::open(path.as_ref())?;
+        let mut bytes = Vec::new();
+        use std::io::Read;
+        file.read_to_end(&mut bytes)?;
+        let object_json: ObjectJson = bincode::deserialize(&bytes)?;
+        Ok(object_json)
+    }
 }
 
 pub fn save_proof_as_json(
