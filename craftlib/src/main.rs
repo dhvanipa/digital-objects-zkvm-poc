@@ -251,8 +251,11 @@ fn main() {
     for i in 1..=num_woods {
         println!("\n=== Creating Wood {} ===", i);
         let object = create_wood_object(&client, &wood_pk, &wood_vk);
-        let filename = format!("objects/wood_{}.json", i);
+        let filename = format!("objects/testwood_{}.json", i);
         object.save_as_json(&filename).expect("failed to save wood");
+        object
+            .save_as_bytes(format!("objects/testwood_{}.bin", i))
+            .expect("failed to save wood as bytes");
         println!("Saved to {}", filename);
         wood_objects.push(object);
     }
@@ -260,10 +263,13 @@ fn main() {
     for i in 1..=num_stones {
         println!("\n=== Creating Stone {} ===", i);
         let object = create_stone_object(&client, &pow_pk, &pow_vk, &stone_pk, &stone_vk);
-        let filename = format!("objects/stone_{}.json", i);
+        let filename = format!("objects/teststone_{}.json", i);
         object
             .save_as_json(&filename)
             .expect("failed to save stone");
+        object
+            .save_as_bytes(format!("objects/teststone_{}.bin", i))
+            .expect("failed to save stone as bytes");
         println!("Saved to {}", filename);
         stone_objects.push(object);
     }
@@ -284,8 +290,11 @@ fn main() {
             stone_object.hash,
             stone_object.proof,
         );
-        let filename = format!("objects/axe_{}.json", i);
+        let filename = format!("objects/testaxe_{}.json", i);
         object.save_as_json(&filename).expect("failed to save axe");
+        object
+            .save_as_bytes(format!("objects/testaxe_{}.bin", i))
+            .expect("failed to save axe as bytes");
         println!("Saved to {}", filename);
     }
 
